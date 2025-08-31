@@ -542,15 +542,24 @@
       if (mergeOption) {
         // Merge with existing words
         finalWords = result[STORAGE_KEY] || {};
-        // Add imported words (newer timestamps will overwrite older ones)
+        // Add imported words, updating timestamp to current time to prevent immediate deletion
+        const now = Date.now();
         for (const word in importedWords) {
-          if (!finalWords[word] || importedWords[word].timestamp > finalWords[word].timestamp) {
-            finalWords[word] = importedWords[word];
-          }
+          // Always update timestamp to current time when importing to keep words fresh
+          finalWords[word] = {
+            word: importedWords[word].word,
+            timestamp: now
+          };
         }
       } else {
-        // Replace existing words
-        finalWords = importedWords;
+        // Replace existing words with fresh timestamps
+        const now = Date.now();
+        for (const word in importedWords) {
+          finalWords[word] = {
+            word: importedWords[word].word,
+            timestamp: now
+          };
+        }
       }
       
       // Save imported words
