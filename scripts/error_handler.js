@@ -5,32 +5,41 @@
   if (typeof window !== 'undefined') {
     // 监听全局错误
     window.addEventListener('error', function(event) {
-      if (event.error && event.error.message) {
-        const errorMsg = event.error.message;
-        if (errorMsg.includes('Extension context invalidated') ||
-            errorMsg.includes('back/forward cache') ||
-            errorMsg.includes('extension port')) {
-          console.warn('Extension/bfcache error suppressed:', errorMsg);
-          event.preventDefault();
-          return false;
+      try {
+        if (event && event.error && event.error.message) {
+          const errorMsg = event.error.message;
+          if (errorMsg.includes('Extension context invalidated') ||
+              errorMsg.includes('back/forward cache') ||
+              errorMsg.includes('extension port')) {
+            // Silently suppress these expected errors
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+          }
         }
+      } catch (e) {
+        // Silently ignore any errors in error handler
       }
-    });
+    }, true);
     
     // 监听未捕获的Promise错误
     window.addEventListener('unhandledrejection', function(event) {
-      if (event.reason) {
-        const errorMsg = event.reason.message || String(event.reason);
-        if (errorMsg.includes('Extension context invalidated') ||
-            errorMsg.includes('message channel closed') ||
-            errorMsg.includes('back/forward cache') ||
-            errorMsg.includes('extension port')) {
-          console.warn('Extension/message error suppressed:', errorMsg);
-          event.preventDefault();
-          return false;
+      try {
+        if (event && event.reason) {
+          const errorMsg = (event.reason && event.reason.message) ? event.reason.message : String(event.reason);
+          if (errorMsg.includes('Extension context invalidated') ||
+              errorMsg.includes('message channel closed') ||
+              errorMsg.includes('back/forward cache') ||
+              errorMsg.includes('extension port')) {
+            // Silently suppress these expected errors
+            event.preventDefault();
+            return false;
+          }
         }
+      } catch (e) {
+        // Silently ignore any errors in error handler
       }
-    });
+    }, true);
   }
   
   // 包装chrome.runtime.onMessage.addListener以添加错误处理
@@ -41,7 +50,7 @@
         try {
           // 检查扩展上下文是否有效
           if (!chrome.runtime?.id) {
-            console.warn('Extension context invalidated in listener');
+            // Extension context lost, silently fail
             return false;
           }
           
@@ -51,11 +60,11 @@
             try {
               // 这是一个简单的检查，实际验证会在service worker中进行
               if (sender.tab.id < 0) {
-                console.warn('Invalid tab ID, possibly in bfcache');
+                // Invalid tab ID, possibly in bfcache
                 return false;
               }
             } catch (e) {
-              console.warn('Cannot validate sender tab:', e);
+              // Cannot validate sender tab
               return false;
             }
           }
@@ -73,7 +82,7 @@
           if (errorMsg.includes('Extension context invalidated') ||
               errorMsg.includes('back/forward cache') ||
               errorMsg.includes('extension port')) {
-            console.warn('Extension/bfcache error in listener:', errorMsg);
+            // Expected error, silently suppress
             return false;
           }
           console.error('Error in message listener:', error);
