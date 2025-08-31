@@ -22,13 +22,13 @@
 
 ### 从源码安装
 
-1. 克隆此仓库(或点击Code -> Download ZIP)：
+1. 克隆此仓库（或点击Code -> Download ZIP -> 解压到文件夹）：
 ```bash
 git clone https://github.com/islder/FixSmoothTranslator.git
 cd FixSmoothTranslator
 ```
 
-2. 打开 Chrome 浏览器并访问 `chrome://extensions/`
+2. 打开 Chrome 浏览器并访问 `chrome://extensions/`（其他浏览器可参考在 extension/扩展 内打开）
 
 3. 在右上角启用「开发者模式」
 
