@@ -1,0 +1,252 @@
+/* Chrome Super Translator - Main Styles with High Specificity */
+.cst-list, .cst-list * {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  font-size: 100% !important;
+  font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", Tahoma, "Hiragino Sans GB", "Microsoft Yahei", sans-serif !important;
+  vertical-align: baseline !important;
+  width: auto !important;
+  height: auto !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  text-align: left !important;
+  box-sizing: border-box !important;
+  line-height: normal !important;
+}
+
+#cst-list {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  width: 250px !important;
+  right: 15px !important;
+  top: 35px !important;
+  max-height: calc(100% - 40px) !important;
+  overflow: auto !important;
+  overflow-anchor: none !important;
+  pointer-events: auto !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+#cst-list::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+}
+
+#cst-list .cst-result-toast {
+  z-index: 2147483647 !important;
+  max-width: 250px !important;
+  min-width: 150px !important;
+  line-height: 1.5 !important;
+  font-size: 14px !important;
+  margin-bottom: 5px !important;
+  border-radius: 5px !important;
+  box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.3) !important;
+  opacity: 0.9 !important;
+  will-change: opacity !important;
+  display: block !important;
+  position: relative !important;
+  overflow: visible !important;
+}
+
+#cst-list .cst-result-toast.fade-enter-active,
+#cst-list .cst-result-toast.fade-leave-active {
+  transition: opacity 0.5s !important;
+}
+
+#cst-list .cst-result-toast.fade-enter,
+#cst-list .cst-result-toast.fade-leave-active {
+  opacity: 0 !important;
+}
+
+#cst-list .cst-result-toast a.close {
+  float: right !important;
+  text-decoration: none !important;
+  margin-right: 5px !important;
+  font-size: 0.8em !important;
+  color: #cecece !important;
+  cursor: pointer !important;
+}
+
+#cst-list .cst-result-toast a.close:hover {
+  color: #fff !important;
+}
+
+#cst-list .cst-result, .cst-result {
+  padding: 3px 5px !important;
+  display: block !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+#cst-list .cst-result .cst-result-phonetic, .cst-result .cst-result-phonetic {
+  margin: 0 0 5px 0 !important;
+  font-style: italic !important;
+  color: inherit !important;
+}
+
+#cst-list .cst-result code,
+#cst-list .cst-result h6,
+#cst-list .cst-result pre,
+.cst-result code,
+.cst-result h6,
+.cst-result pre {
+  border: none !important;
+  background: transparent !important;
+  color: inherit !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  text-transform: none !important;
+  font-size: 14px !important;
+  line-height: 20px !important;
+  white-space: normal !important;
+  font-family: inherit !important;
+}
+
+#cst-list .cst-result .cst-result-text, .cst-result .cst-result-text {
+  margin-bottom: 5px !important;
+  font-weight: 600 !important;
+  color: inherit !important;
+}
+
+/* Format translation content with line breaks */
+#cst-list .cst-result .cst-result-translation,
+.cst-result .cst-result-translation {
+  display: block !important;
+  white-space: pre-line !important;
+  line-height: 1.5 !important;
+  word-break: keep-all !important;
+}
+
+/* Handle HTML content with br tags */
+#cst-list .cst-result-translation br,
+.cst-result-translation br {
+  display: block !important;
+  content: "" !important;
+  margin: 2px 0 !important;
+}
+
+/* Ensure proper spacing between translation items */
+#cst-list .cst-result p,
+.cst-result p {
+  margin: 3px 0 !important;
+  display: block !important;
+}
+
+/* Format code blocks in translations */
+#cst-list .cst-result-translation code,
+.cst-result-translation code {
+  display: inline !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+}
+
+.cst-result[data-cst-theme="dark"][data-cst-status="pending"],
+.cst-result[data-cst-theme="dark"][data-cst-status="success"] {
+  background: #336721 !important;
+  color: #edf8ed !important;
+}
+
+.cst-result[data-cst-theme="dark"][data-cst-status="failure"] {
+  background: #fff299 !important;
+  color: #888 !important;
+}
+
+.cst-result[data-cst-theme="light"][data-cst-status="pending"],
+.cst-result[data-cst-theme="light"][data-cst-status="success"] {
+  background: #ddeadd !important;
+  color: #2b3f29 !important;
+}
+
+.cst-result[data-cst-theme="light"][data-cst-status="failure"] {
+  background: #fff3c8 !important;
+  color: #888 !important;
+}
+
+/* Enhanced text color specificity for all child elements */
+#cst-list .cst-result-toast .cst-result[data-cst-theme="dark"][data-cst-status="pending"] *,
+#cst-list .cst-result-toast .cst-result[data-cst-theme="dark"][data-cst-status="success"] *,
+body #cst-list .cst-result-toast .cst-result[data-cst-theme="dark"][data-cst-status="pending"] *,
+body #cst-list .cst-result-toast .cst-result[data-cst-theme="dark"][data-cst-status="success"] * {
+  color: #edf8ed !important;
+}
+
+#cst-list .cst-result-toast .cst-result[data-cst-theme="dark"][data-cst-status="failure"] *,
+body #cst-list .cst-result-toast .cst-result[data-cst-theme="dark"][data-cst-status="failure"] * {
+  color: #888 !important;
+}
+
+#cst-list .cst-result-toast .cst-result[data-cst-theme="light"][data-cst-status="pending"] *,
+#cst-list .cst-result-toast .cst-result[data-cst-theme="light"][data-cst-status="success"] *,
+body #cst-list .cst-result-toast .cst-result[data-cst-theme="light"][data-cst-status="pending"] *,
+body #cst-list .cst-result-toast .cst-result[data-cst-theme="light"][data-cst-status="success"] * {
+  color: #2b3f29 !important;
+}
+
+#cst-list .cst-result-toast .cst-result[data-cst-theme="light"][data-cst-status="failure"] *,
+body #cst-list .cst-result-toast .cst-result[data-cst-theme="light"][data-cst-status="failure"] * {
+  color: #888 !important;
+}
+
+/* Ultra-high specificity overrides for problematic websites */
+html body #cst-list .cst-result-toast .cst-result[data-cst-theme="dark"] *,
+html body #cst-list .cst-result-toast .cst-result[data-cst-theme="dark"] span,
+html body #cst-list .cst-result-toast .cst-result[data-cst-theme="dark"] div,
+html body #cst-list .cst-result-toast .cst-result[data-cst-theme="dark"] p {
+  color: #edf8ed !important;
+  text-shadow: none !important;
+}
+
+html body #cst-list .cst-result-toast .cst-result[data-cst-theme="light"] *,
+html body #cst-list .cst-result-toast .cst-result[data-cst-theme="light"] span,
+html body #cst-list .cst-result-toast .cst-result[data-cst-theme="light"] div,
+html body #cst-list .cst-result-toast .cst-result[data-cst-theme="light"] p {
+  color: #2b3f29 !important;
+  text-shadow: none !important;
+}
+
+/* Specific overrides for text content elements */
+html body #cst-list .cst-result-toast .cst-result-text,
+html body #cst-list .cst-result-toast .cst-result-phonetic {
+  color: inherit !important;
+}
+
+/* Additional protection against website-specific interference */
+#cst-list .cst-result-toast {
+  isolation: isolate !important;
+  contain: style !important;
+}
+/* Hide the entire toast container during pending state to prevent transparent frames */
+#cst-list .cst-result-toast[data-cst-toast-status="pending"],
+#cst-list .cst-result-toast:has(.cst-result[data-cst-status="pending"]) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Always hide pending results */
+.cst-result[data-cst-status="pending"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Ensure result content is visible when ready */
+.cst-result[data-cst-status="success"],
+.cst-result[data-cst-status="failure"] {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Link inspection mode styles */
+body.cst-link-inspect-mode a {
+  text-decoration: none !important;
+  pointer-events: none !important;
+}

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <style>
+        /* shadcn/ui inspired design system */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 221.2 83.2% 53.3%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 221.2 83.2% 53.3%;
+            --radius: 0.5rem;
+        }
+        
+        body {
+            width: 320px;
+            padding: 0;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            line-height: 1.5;
+        }
+        
+        .container {
+            padding: 20px;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid hsl(var(--border));
+        }
+        
+        .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: hsl(var(--primary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .header-content h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: hsl(var(--foreground));
+            margin: 0;
+        }
+        
+        .header-content p {
+            font-size: 14px;
+            color: hsl(var(--muted-foreground));
+            margin: 2px 0 0 0;
+        }
+        
+        /* Site toggle section */
+        .site-toggle {
+            margin-bottom: 20px;
+            padding: 16px;
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+        }
+        
+        .site-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .site-url {
+            font-size: 14px;
+            font-weight: 500;
+            color: hsl(var(--foreground));
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* Toggle switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: hsl(var(--input));
+            transition: none; /* 移除背景色过渡动画 */
+            border-radius: 24px;
+            border: 1px solid hsl(var(--border));
+        }
+        
+        .slider.animate {
+            transition: background-color 0.3s, border-color 0.3s; /* 只在用户交互时添加背景色动画 */
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background: white;
+            transition: none; /* 移除动画，避免每次打开都播放 */
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        .slider.animate:before {
+            transition: 0.3s; /* 只在用户交互时添加动画 */
+        }
+        
+        input:checked + .slider {
+            background: hsl(var(--primary));
+            border-color: hsl(var(--primary));
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        
+        .toggle-label {
+            font-size: 12px;
+            color: hsl(var(--muted-foreground));
+            margin-top: 4px;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 10px 16px;
+            gap: 8px;
+            border: 1px solid transparent;
+        }
+        
+        .btn-primary {
+            background: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .btn-primary:hover {
+            background: hsl(var(--primary) / 0.9);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .btn-secondary {
+            background: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+            border: 1px solid hsl(var(--border));
+        }
+        
+        .btn-secondary:hover {
+            background: hsl(var(--accent));
+        }
+        
+        .btn-ghost {
+            background: transparent;
+            color: hsl(var(--foreground));
+        }
+        
+        .btn-ghost:hover {
+            background: hsl(var(--accent));
+        }
+        
+        .status {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            border: 1px solid;
+            display: none;
+            min-height: 20px;
+        }
+        
+        .status.show {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .status.info {
+            background: hsl(214 100% 97%);
+            color: hsl(214 84% 56%);
+            border-color: hsl(214 100% 91%);
+        }
+        
+        .status.success {
+            background: hsl(143 85% 96%);
+            color: hsl(140 100% 27%);
+            border-color: hsl(145 92% 91%);
+        }
+        
+        .status.error {
+            background: hsl(0 93% 94%);
+            color: hsl(0 84% 60%);
+            border-color: hsl(0 93% 94%);
+        }
+        
+        /* Icons */
+        .icon-settings { color: hsl(var(--muted-foreground)); }
+        .icon-test { color: hsl(142 71% 45%); }
+        .icon-time { color: hsl(25 95% 53%); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="icon">🌐</div>
+            <div class="header-content">
+                <h1>翻译助手</h1>
+                <p>划词翻译扩展</p>
+            </div>
+        </div>
+        
+        <!-- Site toggle section -->
+        <div class="site-toggle">
+            <div class="site-info">
+                <span class="site-url" id="currentSite">加载中...</span>
+                <label class="switch">
+                    <input type="checkbox" id="siteToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-label" id="toggleStatus">在此网站启用插件</div>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn-primary" id="openSettingsBtn">
+                <span class="icon-settings">⚙️</span>
+                打开设置页面
+            </button>
+            <button class="btn-secondary" id="testBtn">
+                <span class="icon-test">🧪</span>
+                测试翻译功能
+            </button>
+            <button class="btn-secondary" id="checkBtn">
+                <span class="icon-time">⏱️</span>
+                查看当前时间设置
+            </button>
+        </div>
+        
+        <div id="statusArea" class="status"></div>
+    </div>
+
+    <script src="../scripts/popup_simple.js"></script>
+</body>
+</html>

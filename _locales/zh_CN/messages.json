@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "穆译",
+    "description": "The name of the application"
+  },
+  "appShortName": {
+    "message": "smooth_trans",
+    "description": "The short_name (maximum of 12 characters recommended) is a short version of the app's name."
+  },
+  "appDescription": {
+    "message": "让你专注于阅读的划词翻译工具",
+    "description": "The description of the application"
+  },
+  "browserActionTitle": {
+    "message": "穆译",
+    "description": "The title of the browser action button"
+  }
+}

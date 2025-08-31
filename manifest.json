@@ -1,0 +1,73 @@
+{
+  "manifest_version": 3,
+  "default_locale": "zh_CN",
+  "name": "__MSG_appName__",
+  "short_name": "__MSG_appShortName__",
+  "description": "__MSG_appDescription__",
+  "version": "3.0.0",
+  "icons": {
+    "16": "icon.png",
+    "32": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "background": {
+    "service_worker": "scripts/sw.js"
+  },
+  "action": {
+    "default_title": "__MSG_browserActionTitle__",
+    "default_popup": "pages/popup_simple.html"
+  },
+  "options_ui": {"page": "pages/simple_options.html", "open_in_tab": true},
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "scripts/error_handler.js",
+        "scripts/page.js",
+        "scripts/timeout_enforcer.js",
+        "scripts/toast_status_sync.js"
+      ],
+      "css": [
+        "styles/page.css"
+      ]
+    },
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "scripts/error_handler.js",
+        "scripts/inspector.js"
+      ],
+      "all_frames": true
+    }
+  ],
+  "commands": {
+    "toggle-link-inspect": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+L",
+        "mac": "MacCtrl+Shift+L"
+      },
+      "description": "打开/关闭链接划词模式"
+    }
+  },
+  "permissions": [
+    "tabs",
+    "storage",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "http://fanyi.youdao.com/*",
+    "https://fanyi.youdao.com/*",
+    "http://mobile.youdao.com/*",
+    "https://mobile.youdao.com/*",
+    "https://dict.youdao.com/*",
+    "https://translate.googleapis.com/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

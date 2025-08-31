@@ -1,0 +1,43 @@
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Node modules (if you add any in future)
+node_modules/
+
+# Build directories
+dist/
+build/
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+npm-debug.log*
+
+# Chrome extension development
+*.pem
+*.crx
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+.tmp/
+
+# Personal data
+personal_data/
+user_data/
