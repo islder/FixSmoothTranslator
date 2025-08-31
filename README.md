@@ -1,7 +1,7 @@
 # Fix Smooth Translator - 穆译
 
 > **特别感谢**  
-> 本项目基于 [smooth-translator](https://github.com/greatghoul/smooth-translator) 升级重构而来。原项目使用 Chrome Manifest V2 架构（现已废弃），本项目沿用了原项目的图标/插件名和toast样式，并将代码重构为 Manifest V3 架构。
+> 本项目基于 [smooth-translator](https://github.com/greatghoul/smooth-translator) 升级重构而来。原项目使用 Chrome Manifest V2 架构（现已废弃），本项目沿用了原项目的图标/插件名和 toast 样式，并将代码重构为 Manifest V3 架构。
 
 一款轻量高效的 Chrome 扩展，支持划词翻译和单词记录。
 
@@ -21,9 +21,9 @@
 
 ## 安装方法
 
-### 从源码安装（开发版）
+### 从源码安装
 
-1. 克隆此仓库：
+1. 克隆此仓库(或点击Code -> Download ZIP)：
 ```bash
 git clone https://github.com/yourusername/FixSmoothTranslator_dev.git
 cd FixSmoothTranslator_dev
