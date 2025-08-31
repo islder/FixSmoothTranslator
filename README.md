@@ -25,8 +25,8 @@
 
 1. 克隆此仓库(或点击Code -> Download ZIP)：
 ```bash
-git clone https://github.com/yourusername/FixSmoothTranslator_dev.git
-cd FixSmoothTranslator_dev
+git clone https://github.com/islder/FixSmoothTranslator.git
+cd FixSmoothTranslator
 ```
 
 2. 打开 Chrome 浏览器并访问 `chrome://extensions/`
