@@ -259,6 +259,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const bridged = Object.assign({ __bridged: true }, message);
         if (Number.isFinite(timeoutOverride)) bridged.timeout = timeoutOverride;
         chrome.runtime.sendMessage(bridged, (resp) => {
+          if (responded) return; // Prevent double response
           responded = true;
           if (chrome.runtime.lastError) {
             console.warn('Translate message failed:', chrome.runtime.lastError.message);
@@ -281,6 +282,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         chrome.storage.local.get({ notifyTimeout: 10 }, (opts) => {
           setTimeout(() => {
             if (!responded) {
+              responded = true; // Mark as responded to prevent race condition
               try {
                 const to = Number(opts && opts.notifyTimeout);
                 const timeout = Number.isFinite(to) ? to : 10;
@@ -299,38 +301,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       } else {
         forward(Number(message && message.timeout));
       }
+    }).catch((error) => {
+      console.error('Failed to ensure offscreen for translate:', error);
+      // Send error response immediately if offscreen fails
+      try {
+        sendResponse({ 
+          status: 'failure', 
+          translation: '初始化失败', 
+          text: message.text || '', 
+          timeout: 10 
+        });
+      } catch (e) {
+        console.warn('Failed to send error response:', e);
+      }
     });
     return true;
   }
-  // Fallback: proxy other messages to offscreen
-  ensureOffscreen().then(() => {
-    const bridged = Object.assign({ __bridged: true }, message);
-    chrome.runtime.sendMessage(bridged, (resp) => {
-      if (chrome.runtime.lastError) {
-        console.warn('Message sending failed:', chrome.runtime.lastError.message);
-        try {
-          sendResponse({ error: chrome.runtime.lastError.message });
-        } catch (e) {
-          console.warn('Failed to send error response:', e);
-        }
-        return;
-      }
-      try { 
-        sendResponse(resp); 
-      } catch (error) {
-        console.warn('Failed to send response:', error);
-      }
-    });
-  }).catch((error) => {
-    console.error('Failed to ensure offscreen:', error);
-    // Send error response to prevent channel timeout
-    try {
-      sendResponse({ error: 'Failed to initialize offscreen document' });
-    } catch (e) {
-      console.warn('Failed to send error response:', e);
-    }
-  });
-  return true; // keep the channel open for async response
+  // For unknown message types, don't keep the channel open
+  // This prevents the "channel closed before response" error
+  return false;
 });
 
 // Commands mapping (handle directly)
