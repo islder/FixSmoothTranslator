@@ -138,12 +138,16 @@
     
     chrome.commands.getAll(function(commands) {
       const toggleLinkCommand = commands.find(cmd => cmd.name === 'toggle-link-inspect');
-      if (toggleLinkCommand && toggleLinkCommand.shortcut) {
-        const currentShortcut = document.getElementById('currentShortcut');
-        if (currentShortcut) {
+      const currentShortcut = document.getElementById('currentShortcut');
+      
+      if (currentShortcut) {
+        if (toggleLinkCommand && toggleLinkCommand.shortcut && toggleLinkCommand.shortcut.trim() !== '') {
           // Format the shortcut for display
           const formatted = toggleLinkCommand.shortcut.replace(/\+/g, '+');
-          currentShortcut.textContent = formatted || '未设置';
+          currentShortcut.textContent = formatted;
+        } else {
+          // No shortcut is set
+          currentShortcut.textContent = '未设置';
         }
       }
     });
