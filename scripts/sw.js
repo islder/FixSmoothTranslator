@@ -222,7 +222,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
       });
     }
-    return; // no response expected
+    return false; // explicitly return false for no response
   }
   if (message && message.type === 'current') {
     chrome.storage.local.get({ __currentSelection: '' }, (items) => sendResponse(items.__currentSelection));

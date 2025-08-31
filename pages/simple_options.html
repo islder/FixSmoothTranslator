@@ -480,6 +480,37 @@
             </div>
         </div>
         
+        <!-- Keyboard Shortcut Settings -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="icon">⌨️</span>
+                    快捷键设置
+                </h2>
+                <p class="card-description">
+                    自定义链接划词查词的快捷键（默认：Ctrl+Shift+L）
+                </p>
+            </div>
+            <div class="card-content">
+                <div class="form-item">
+                    <div style="padding: 16px; background: hsl(var(--muted) / 0.3); border-radius: var(--radius); border: 1px solid hsl(var(--border));">
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+                            <div style="flex: 1;">
+                                <p style="margin: 0 0 8px 0; font-weight: 500;">链接划词查词快捷键</p>
+                                <p style="margin: 0; font-size: 13px; color: hsl(var(--muted-foreground));">当前快捷键：<span id="currentShortcut" style="font-family: monospace; font-weight: 600; color: hsl(var(--primary));">Ctrl+Shift+L</span></p>
+                                <p style="margin: 8px 0 0 0; font-size: 12px; color: hsl(var(--muted-foreground));">启用后可在链接上进行划词翻译，划词后自动退出该模式</p>
+                            </div>
+                            <button class="btn btn-primary" id="customizeShortcutBtn">
+                                <span class="icon">⚙️</span>
+                                自定义快捷键
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="shortcutStatusArea" class="alert"></div>
+            </div>
+        </div>
+        
         <!-- Word Recording Feature Section -->
         <div class="card">
             <div class="card-header">

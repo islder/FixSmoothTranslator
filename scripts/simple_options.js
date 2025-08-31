@@ -116,6 +116,66 @@
     });
   }
 
+  // Keyboard shortcut functions
+  function showShortcutMessage(text, type = 'info') {
+    const shortcutStatusArea = document.getElementById('shortcutStatusArea');
+    if (!shortcutStatusArea) return;
+    shortcutStatusArea.className = 'alert show alert-' + type;
+    shortcutStatusArea.textContent = text;
+    setTimeout(function(){ 
+      if (shortcutStatusArea) {
+        shortcutStatusArea.className = 'alert';
+        shortcutStatusArea.textContent = '';
+      }
+    }, 5000);
+  }
+
+  function getCurrentShortcut() {
+    if (!chrome || !chrome.commands) {
+      showShortcutMessage('⚠️ 快捷键API不可用', 'error');
+      return;
+    }
+    
+    chrome.commands.getAll(function(commands) {
+      const toggleLinkCommand = commands.find(cmd => cmd.name === 'toggle-link-inspect');
+      if (toggleLinkCommand && toggleLinkCommand.shortcut) {
+        const currentShortcut = document.getElementById('currentShortcut');
+        if (currentShortcut) {
+          // Format the shortcut for display
+          const formatted = toggleLinkCommand.shortcut.replace(/\+/g, '+');
+          currentShortcut.textContent = formatted || '未设置';
+        }
+      }
+    });
+  }
+
+  function openShortcutSettings() {
+    // Chrome doesn't allow programmatic modification of shortcuts,
+    // but we can open the shortcuts page for the user
+    if (chrome && chrome.tabs) {
+      // Show instruction message
+      showShortcutMessage('🔗 正在打开Chrome快捷键设置页面...', 'info');
+      
+      // Open Chrome's keyboard shortcuts page
+      chrome.tabs.create({
+        url: 'chrome://extensions/shortcuts'
+      }, function() {
+        // After opening, show additional instructions
+        setTimeout(function() {
+          showShortcutMessage(
+            '📝 请在打开的页面中找到「Fix Smooth Translator」，然后修改「打开/关闭链接划词模式」的快捷键。修改后返回此页面查看更新。',
+            'info'
+          );
+        }, 500);
+      });
+    } else {
+      showShortcutMessage(
+        '⚠️ 请手动打开 chrome://extensions/shortcuts 页面修改快捷键',
+        'info'
+      );
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function(){
     rangeInput = document.getElementById('timeoutRange');
     valueDisplay = document.getElementById('valueDisplay');
@@ -131,6 +191,22 @@
 
     const quickBtns = document.querySelectorAll('.quickBtn');
     quickBtns.forEach(function(btn){ btn.addEventListener('click', handleQuickClick); });
+
+    // Keyboard shortcut button
+    const customizeShortcutBtn = document.getElementById('customizeShortcutBtn');
+    if (customizeShortcutBtn) {
+      customizeShortcutBtn.addEventListener('click', openShortcutSettings);
+    }
+
+    // Load current shortcut
+    getCurrentShortcut();
+
+    // Refresh shortcut display when page becomes visible (user might have changed it)
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) {
+        getCurrentShortcut();
+      }
+    });
 
     // Wait a tick for chrome APIs if needed
     if (chrome && chrome.storage) {
