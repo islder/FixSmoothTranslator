@@ -68,12 +68,3 @@ cd FixSmoothTranslator
 ## 许可证
 
 本项目采用 MIT 许可证 - 详见 LICENSE 文件。
-
-## 更新日志
-
-### 版本 3.0.0
-- 迁移至 Manifest V3
-- 新增单词记录功能
-- 通过 offscreen 文档优化性能
-- 增强错误处理和超时管理
-- 改进界面响应速度
