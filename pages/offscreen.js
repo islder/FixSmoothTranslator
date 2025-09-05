@@ -180,115 +180,273 @@ async function fetchTranslate(text) {
 
 // iCiba dictionary for word lookup when Youdao fails
 async function fetchICiba(word) {
+  // Clean the word - remove any zero-width characters and trim
+  const cleanWord = String(word)
+    .replace(/[\u200B\u200C\u200D\u200E\u200F\uFEFF]/g, '') // Remove zero-width chars
+    .trim();
+  
   try {
-    const url = `https://www.iciba.com/word?w=${encodeURIComponent(word)}`;
+    const url = `https://www.iciba.com/word?w=${encodeURIComponent(cleanWord)}`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
     const res = await fetch(url, { credentials: 'omit', signal: controller.signal });
     clearTimeout(timeoutId);
     const html = await res.text();
-    const doc = new DOMParser().parseFromString(sanitizeHTML(html), 'text/html');
+    const doc = new DOMParser().parseFromString(html, 'text/html');
     
-    const result = { status: 'failure', text: word };
+    const result = { status: 'failure', text: cleanWord };
     
-    // Extract phonetic from iCiba page - try multiple selector patterns
+    // Extract phonetic from iCiba page - look for phonetic symbols
+    // Try multiple approaches
+    let phonetic = '';
+    
+    // Approach 1: Try selectors first
     const phoneticSelectors = [
-      '.Mean_symbols__fpCmS .Mean_pronounce__dqn_a span',
+      '.Mean_symbols__fpCmS span',
+      '.Mean_symbols__fpCmS',
+      '[class*="symbols"] span',
+      '[class*="symbols"]',
+      '[class*="Symbol"]',
       '.Mean_pronounce__dqn_a span',
+      '.Mean_pronounce__dqn_a',
       '.pronounce span',
+      '.pronounce',
       '[class*="pronounce"] span',
-      '[class*="phonetic"]'
+      '[class*="pronounce"]',
+      '[class*="phonetic"]',
+      'span[class*="phone"]'
     ];
+    
+    const allPhonetics = [];
     
     for (const selector of phoneticSelectors) {
       const phoneticElems = doc.querySelectorAll(selector);
       if (phoneticElems.length > 0) {
-        const phonetics = [];
         phoneticElems.forEach(elem => {
           const text = elem.textContent.trim();
-          if (text && text.includes('[') && text.includes(']')) {
-            // Extract just the phonetic part
-            const match = text.match(/\[[^\]]+\]/g);
-            if (match) {
-              phonetics.push(...match);
+          // Look for text containing phonetic brackets
+          if (text && (text.includes('[') || text.includes('/'))) {
+            // Try multiple patterns
+            const patterns = [
+              /\[[^\]]+\]/g,  // [xxx] - note the 'g' flag to get all matches
+              /\/[^\/]+\//g,  // /xxx/
+              /［[^］]+］/g    // Full-width brackets
+            ];
+            
+            for (const pattern of patterns) {
+              const matches = text.match(pattern);
+              if (matches) {
+                matches.forEach(m => {
+                  if (!allPhonetics.includes(m)) {
+                    allPhonetics.push(m);
+                  }
+                });
+              }
             }
           }
         });
-        if (phonetics.length > 0) {
-          result.phonetic = phonetics.join(' ');
-          break;
-        }
       }
     }
+    
+    // Choose the best phonetic (prefer US/second one if available, otherwise first)
+    if (allPhonetics.length > 0) {
+      // If we have multiple phonetics, prefer the second one (usually US)
+      // Otherwise use the first one
+      phonetic = allPhonetics.length > 1 ? allPhonetics[1] : allPhonetics[0];
+    }
+    
+    // Approach 2: Search in page text more broadly
+    if (!phonetic && allPhonetics.length === 0) {
+      const pageText = doc.body ? doc.body.innerText : '';
+      
+      // More comprehensive phonetic pattern - use 'g' flag to get all matches
+      const phoneticPatterns = [
+        /\[[ˈˌ\w\s:əɪʊæɑɔʌɛɪŋθðʃʒaeiouːɜːɒʤʧ]+\]/g,  // IPA in square brackets
+        /\/[ˈˌ\w\s:əɪʊæɑɔʌɛɪŋθðʃʒaeiouːɜːɒʤʧ]+\//g,    // IPA in slashes
+        /\[[a-zA-Z:ˈˌ\-\.]+\]/g,                          // Simple phonetic
+        /［[^］]+］/g                                       // Full-width brackets
+      ];
+      
+      const textPhonetics = [];
+      for (const pattern of phoneticPatterns) {
+        const matches = pageText.match(pattern);
+        if (matches) {
+          matches.forEach(m => {
+            if (!textPhonetics.includes(m)) {
+              textPhonetics.push(m);
+            }
+          });
+        }
+      }
+      
+      if (textPhonetics.length > 0) {
+        // Choose the best one (prefer second if available for US pronunciation)
+        phonetic = textPhonetics.length > 1 ? textPhonetics[1] : textPhonetics[0];
+      }
+    }
+    
+    // Phonetic will be set later when building the final result
     
     // Extract meanings from iCiba page - try multiple approaches
     const meanings = [];
     
     // Approach 1: Try to get meanings from class-based selectors
+    // More inclusive selectors to catch different page structures
     const meaningSelectors = [
       '.Mean_part__UI0nU',
       '[class*="Mean_part"]',
-      '[class*="trans"]',
-      '.trans-container li'
+      '[class*="Mean"] [class*="part"]',
+      '.trans-container li',
+      '[class*="trans"]'
     ];
     
     for (const selector of meaningSelectors) {
-      if (meanings.length > 0) break;
+      if (meanings.length > 0) {
+        break;
+      }
       
       const elements = doc.querySelectorAll(selector);
+      
       elements.forEach(elem => {
         // Look for part of speech (n., v., adj., etc.)
         const text = elem.textContent.trim();
         
+        // Skip common UI elements
+        const uiKeywords = [
+          'AI工具', 'AI释义', 'AI解词', '英文校对', '词霸下载',
+          '简明词典', '柯林斯', '牛津', '查看', '更多', '翻译',
+          '例句', '登录', '首页', '其他', '全部', '实用场景',
+          'clean翻译清洁', '以上结果来自机器翻译'
+        ];
+        
+        // Check if this is a UI element
+        const isUIElement = uiKeywords.some(keyword => text.includes(keyword));
+        
         // Filter out navigation, buttons, and other UI elements
         if (text && 
             text.length > 1 && 
-            text.length < 200 &&
-            !text.includes('查看') &&
-            !text.includes('更多') &&
-            !text.includes('翻译') &&
-            !text.includes('例句')) {
+            text.length < 500 &&
+            !isUIElement) {
           
-          // Check if it looks like a definition (has Chinese characters or is a part of speech)
-          if (/[一-龥]/.test(text) || /^(n\.|v\.|adj\.|adv\.|prep\.|pron\.)/.test(text)) {
-            meanings.push(text);
+          // Check if it looks like a definition (has part of speech marker at beginning)
+          if (/^(int|n|v|vi|vt|adj|adv|prep|pron|conj|art|num|abbr)\./i.test(text)) {
+            // Split by part of speech markers
+            const posPattern = /(int\.|n\.|v\.|vi\.|vt\.|adj\.|adv\.|prep\.|pron\.|conj\.|art\.|num\.|abbr\.)/g;
+            
+            // Split text while keeping the delimiters
+            const splits = text.split(posPattern);
+            
+            // Recombine part of speech with its definition
+            const combined = [];
+            for (let i = 0; i < splits.length; i++) {
+              const part = splits[i].trim();
+              if (!part) continue;
+              
+              // Check if this is a POS marker
+              if (/^(int|n|v|vi|vt|adj|adv|prep|pron|conj|art|num|abbr)\.$/i.test(part)) {
+                // This is a POS marker, combine with next part if available
+                if (i + 1 < splits.length && splits[i + 1].trim()) {
+                  const def = splits[i + 1].trim();
+                  // Skip if the definition part looks like UI text
+                  if (!uiKeywords.some(keyword => def.includes(keyword))) {
+                    const meaning = part + ' ' + def;
+                    combined.push(meaning);
+                  }
+                  i++; // Skip next part as we've combined it
+                }
+              }
+            }
+            
+            // Add all combined meanings
+            meanings.push(...combined);
           }
         }
       });
     }
     
-    // Approach 2: If no meanings found, try to find any list items with Chinese text
+    // Approach 2: If no meanings found, try extracting from page text directly
     if (meanings.length === 0) {
-      const allLis = doc.querySelectorAll('li');
-      allLis.forEach(elem => {
-        const text = elem.textContent.trim();
-        if (text && 
-            /[一-龥]/.test(text) && // Has Chinese characters
-            text.length > 2 && 
-            text.length < 100 &&
-            !text.includes('查看') &&
-            !text.includes('更多')) {
-          meanings.push(text);
+      
+      // Get the page text and look for definitions section
+      const pageText = doc.body ? doc.body.innerText : '';
+      const lines = pageText.split('\n').map(l => l.trim()).filter(l => l);
+      
+      // Look for the "释义" (definitions) section
+      let inDefinitionsSection = false;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        
+        if (line === '释义') {
+          inDefinitionsSection = true;
+          continue;
         }
+        
+        if (inDefinitionsSection) {
+          // Stop at next section markers
+          if (line === '实用场景例句' || line === '全部' || line.includes('例句')) {
+            break;
+          }
+          
+          // Look for lines with part of speech markers
+          if (/^(int|n|v|vi|vt|adj|adv|prep|pron|conj|art|num|abbr)\./i.test(line)) {
+            // Split if multiple POS on same line
+            const posPattern = /(int\.|n\.|v\.|vi\.|vt\.|adj\.|adv\.|prep\.|pron\.|conj\.|art\.|num\.|abbr\.)/g;
+            const splits = line.split(posPattern);
+            
+            for (let j = 0; j < splits.length; j++) {
+              const part = splits[j].trim();
+              if (/^(int|n|v|vi|vt|adj|adv|prep|pron|conj|art|num|abbr)\.$/i.test(part) && j + 1 < splits.length) {
+                const meaning = part + ' ' + splits[j + 1].trim();
+                meanings.push(meaning);
+                j++;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // Build the final result like Youdao format
+    const resultParts = [];
+    
+    // Store phonetic separately - don't add to translation text
+    if (phonetic) {
+      // Store phonetic in result object only
+      const phoneticStr = String(phonetic).trim();
+      result.phonetic = phoneticStr;
+      // DON'T add to resultParts to avoid duplication
+    }
+    
+    // Add meanings
+    if (meanings.length > 0) {
+      // Clean up and add meanings
+      meanings.slice(0, 10).forEach(meaning => {
+        // Ensure proper spacing after part of speech markers
+        let cleaned = meaning
+          .replace(/((?:int|n|v|vi|vt|adj|adv|prep|pron|conj|art|num|abbr)\.)([^ ])/gi, '$1 $2')
+          .trim();
+        resultParts.push(cleaned);
       });
     }
     
-    if (meanings.length > 0) {
-      result.translation = meanings.slice(0, 10).join('\n');
+    if (resultParts.length > 0) {
+      result.translation = resultParts.join('\n');
       result.status = 'success';
+    } else {
+      result.translation = '未找到释义';
     }
     
     return result;
   } catch (error) {
     console.error('iCiba fetch error:', error);
-    return { status: 'failure', text: word, translation: '未找到释义' };
+    return { status: 'failure', text: cleanWord || word, translation: '未找到释义' };
   }
 }
 
 async function translateHandler(payload, sendResponse) {
   let text = (payload && payload.text || '').trim();
   // trim paired punctuation around the selection (added for duplicate identity)
-  text = text.replace(/^[\'\"“”‘’\(\[\{]+/, '').replace(/[\'\"“”‘’\)\]\}]+$/, '');
+  text = text.replace(/^[\'\"""''\(\[\{]+/, '').replace(/[\'\"""''\)\]\}]+$/, '');
   if (!text) {
     try {
       return sendResponse({ status: 'failure', translation: '未找到释义' });
@@ -297,21 +455,232 @@ async function translateHandler(payload, sendResponse) {
       return;
     }
   }
-  let result;
+  
+  // Get translation source preferences
+  let sources = null;
+  
+  console.log('[FixSmoothTranslator] ====== TRANSLATION START ======');
+  console.log('[FixSmoothTranslator] Text to translate:', text);
+  console.log('[FixSmoothTranslator] Message source:', payload.from || 'unknown');
+  console.log('[FixSmoothTranslator] Is word?:', isWord(text));
+  
+  // CRITICAL FIX: Use sources passed from service worker since offscreen can't access storage
+  if (payload.translationSources) {
+    sources = payload.translationSources;
+    console.log('[FixSmoothTranslator] Using sources passed from service worker:', JSON.stringify(sources));
+  } else {
+    // Fallback: try to read from storage (won't work in offscreen but keep for compatibility)
+    console.log('[FixSmoothTranslator] No sources in payload, trying storage (will likely fail in offscreen)');
+    try {
+      const storageResult = await new Promise((resolve) => {
+        if (chrome && chrome.storage && chrome.storage.local) {
+          chrome.storage.local.get(['translationSources'], (result) => {
+            if (chrome.runtime.lastError) {
+              console.error('[FixSmoothTranslator] Storage error:', chrome.runtime.lastError);
+              resolve({});
+            } else {
+              resolve(result);
+            }
+          });
+        } else {
+          console.log('[FixSmoothTranslator] Chrome storage not available (expected in offscreen)');
+          resolve({});
+        }
+      });
+      
+      if (storageResult && storageResult.translationSources) {
+        sources = storageResult.translationSources;
+        console.log('[FixSmoothTranslator] Got sources from storage:', JSON.stringify(sources));
+      }
+    } catch (e) {
+      console.error('[FixSmoothTranslator] Error loading sources:', e);
+    }
+  }
+  
+  // Use defaults if no sources found
+  if (!sources) {
+    console.log('[FixSmoothTranslator] No sources found, using defaults');
+    sources = {
+      youdaoDict: true,
+      youdaoTranslate: true,
+      iciba: false
+    };
+  }
+  
+  // Log the sources we're using
+  console.log('[FixSmoothTranslator] Final sources to use:', JSON.stringify(sources));
+  console.log('[FixSmoothTranslator] Individual source values:');
+  console.log('  - youdaoDict:', sources.youdaoDict, '(type:', typeof sources.youdaoDict, ')');
+  console.log('  - youdaoTranslate:', sources.youdaoTranslate, '(type:', typeof sources.youdaoTranslate, ')');
+  console.log('  - iciba:', sources.iciba, '(type:', typeof sources.iciba, ')')
+  
+  // Ensure sources is defined
+  if (!sources) {
+    console.error('[FixSmoothTranslator] Sources is null, using defaults');
+    sources = {
+      youdaoDict: true,
+      youdaoTranslate: true,
+      iciba: false
+    };
+  }
+  
+  console.log('[FixSmoothTranslator] Final sources to use:', JSON.stringify(sources));
+  console.log('[FixSmoothTranslator] Source types:', {
+    youdaoDict: typeof sources.youdaoDict,
+    youdaoTranslate: typeof sources.youdaoTranslate,
+    iciba: typeof sources.iciba
+  });
+  
+  let result = null;
   try {
     if (isWord(text)) {
-      result = await fetchDict(text);
-      if (result.status !== 'success') {
-        // fallback to iCiba for single words when Youdao fails
-        const iciba = await fetchICiba(text);
-        if (iciba && iciba.status === 'success') {
-          result = iciba;
+      // IMPORTANT: Only use explicitly enabled sources - check for true explicitly
+      const enabledSources = [];
+      
+      // Check iCiba first - if it's the only one enabled, prioritize it
+      if (sources.iciba === true) {
+        enabledSources.push('iciba');
+        console.log('[FixSmoothTranslator] iciba is enabled (true) - PRIORITY');
+      } else {
+        console.log('[FixSmoothTranslator] iciba is disabled:', sources.iciba);
+      }
+      
+      if (sources.youdaoDict === true) {
+        enabledSources.push('youdaoDict');
+        console.log('[FixSmoothTranslator] youdaoDict is enabled (true)');
+      } else {
+        console.log('[FixSmoothTranslator] youdaoDict is disabled:', sources.youdaoDict);
+      }
+      
+      if (sources.youdaoTranslate === true) {
+        enabledSources.push('youdaoTranslate');
+        console.log('[FixSmoothTranslator] youdaoTranslate is enabled (true)');
+      } else {
+        console.log('[FixSmoothTranslator] youdaoTranslate is disabled:', sources.youdaoTranslate);
+      }
+      
+      console.log(`[FixSmoothTranslator] Final enabled sources for word "${text}":`, enabledSources);
+      
+      // If NO sources are enabled, return failure
+      if (enabledSources.length === 0) {
+        result = { status: 'failure', translation: '请至少选择一个翻译源', text };
+      } else {
+        // IMPORTANT: Only process sources that are in enabledSources array
+        console.log(`[FixSmoothTranslator] Will ONLY try these sources: ${enabledSources.join(', ')}`);
+        
+        // Try ONLY enabled sources, stop at first success
+        for (const source of enabledSources) {
+          // Skip if we already have a successful result
+          if (result && result.status === 'success') {
+            console.log(`[FixSmoothTranslator] Skipping ${source} - already have successful result`);
+            break;
+          }
+          
+          console.log(`[FixSmoothTranslator] Trying source: ${source}`);
+          
+          try {
+            switch(source) {
+              case 'iciba':
+                console.log('[FixSmoothTranslator] Processing iciba source (ONLY)');
+                if (sources.iciba !== true) {
+                  console.error('[FixSmoothTranslator] ERROR: iciba in enabledSources but not enabled in sources!');
+                  continue;
+                }
+                result = await fetchICiba(text);
+                if (result) {
+                  result.source = 'iciba';
+                  console.log(`[FixSmoothTranslator] iCiba result:`, result.status, result.translation ? result.translation.substring(0, 50) : '');
+                }
+                break;
+                
+              case 'youdaoDict':
+                console.log('[FixSmoothTranslator] Processing youdaoDict source');
+                if (sources.youdaoDict !== true) {
+                  console.error('[FixSmoothTranslator] CRITICAL: youdaoDict in enabledSources but not enabled in sources!');
+                  result = {
+                    status: 'failure',
+                    text: text,
+                    translation: 'ERROR: Youdao Dict was called but is disabled!'
+                  };
+                  continue;
+                }
+                result = await fetchDict(text);
+                if (result) {
+                  result.source = 'youdao-dict';
+                  console.log(`[FixSmoothTranslator] Youdao Dict result:`, result.status, result.translation ? result.translation.substring(0, 50) : '');
+                }
+                break;
+                
+              case 'youdaoTranslate':
+                console.log('[FixSmoothTranslator] Processing youdaoTranslate source');
+                if (sources.youdaoTranslate !== true) {
+                  console.error('[FixSmoothTranslator] ERROR: youdaoTranslate in enabledSources but not enabled in sources!');
+                  continue;
+                }
+                result = await fetchTranslate(text);
+                if (result) {
+                  result.source = 'youdao-translate';
+                  console.log(`[FixSmoothTranslator] Youdao Translate result:`, result.status, result.translation ? result.translation.substring(0, 50) : '');
+                }
+                break;
+                
+              default:
+                console.error(`[FixSmoothTranslator] Unknown source: ${source}`);
+            }
+          } catch (sourceError) {
+            console.log(`[FixSmoothTranslator] Error with source ${source}:`, sourceError.message);
+            // Continue to next source
+          }
+        }
+      }
+      
+      // If no source gave results
+      if (!result || result.status !== 'success') {
+        console.log('[FixSmoothTranslator] No successful result from enabled sources');
+        console.log('[FixSmoothTranslator] Sources tried:', enabledSources.join(', '));
+        result = { status: 'failure', translation: '未找到释义', text };
+      }
+      
+      // CRITICAL: Final check - ensure the result source is actually enabled
+      if (result && result.source) {
+        const sourceMap = {
+          'iciba': 'iciba',
+          'youdao-dict': 'youdaoDict',
+          'youdao-translate': 'youdaoTranslate'
+        };
+        const sourceName = sourceMap[result.source];
+        if (sourceName && sources[sourceName] !== true) {
+          console.error(`[FixSmoothTranslator] CRITICAL ERROR: Result has source ${result.source} but ${sourceName} is not enabled!`);
+          console.error(`[FixSmoothTranslator] Enabled sources were: ${enabledSources.join(', ')}`);
+          // Force failure if the source is not enabled
+          result = { 
+            status: 'failure', 
+            translation: `ERROR: ${result.source} was used but not enabled`, 
+            text 
+          };
         }
       }
     } else {
-      result = await fetchTranslate(text);
+      // For phrases/sentences, use online translation if enabled
+      console.log(`[FixSmoothTranslator] Phrase/sentence mode for: "${text}"`);
+      console.log(`[FixSmoothTranslator] Youdao Translate enabled:`, sources.youdaoTranslate);
+      
+      if (sources.youdaoTranslate === true) {
+        console.log(`[FixSmoothTranslator] Using Youdao Translate for phrase`);
+        result = await fetchTranslate(text);
+        if (result && result.status === 'success') {
+          result.source = 'youdao-translate';
+        }
+      } else {
+        console.log(`[FixSmoothTranslator] Youdao Translate disabled, cannot translate phrases`);
+        result = { status: 'failure', translation: '有道在线翻译未启用，无法翻译句子', text };
+      }
     }
     if (!result.text) result.text = text;
+    // Add source info to translation for debugging
+    if (result && result.source) {
+      console.log(`[FixSmoothTranslator] Final source used: ${result.source}`);
+    }
   } catch (e) {
     result = { status: 'failure', translation: '未找到释义', text };
   }
@@ -326,26 +695,26 @@ async function translateHandler(payload, sendResponse) {
     }
     return;
   }
-  const getter = storageNS && storageNS.local && storageNS.local.get ? storageNS.local.get : null;
-  if (!getter) {
+  // Get timeout setting
+  if (chrome && chrome.storage && chrome.storage.local) {
+    chrome.storage.local.get({ notifyTimeout: 10 }, (opts) => {
+      const to = Number(opts && opts.notifyTimeout);
+      const timeout = Number.isFinite(to) ? to : 10;
+      result.timeout = timeout;
+      try {
+        sendResponse(result);
+      } catch (e) {
+        console.warn('Failed to send response from storage callback:', e);
+      }
+    });
+  } else {
     result.timeout = 10;
     try {
       sendResponse(result);
     } catch (e) {
-      console.warn('Failed to send response without getter:', e);
+      console.warn('Failed to send response without storage:', e);
     }
-    return;
   }
-  getter({ notifyTimeout: 10 }, (opts) => {
-    const to = Number(opts && opts.notifyTimeout);
-    const timeout = Number.isFinite(to) ? to : 10;
-    result.timeout = timeout;
-    try {
-      sendResponse(result);
-    } catch (e) {
-      console.warn('Failed to send response from storage callback:', e);
-    }
-  });
 }
 
 function saveCurrent(text) {
@@ -437,9 +806,29 @@ const isSw = (typeof window === 'undefined');
 const runtimeNS = (typeof chrome !== 'undefined' && chrome.runtime) ? chrome : (typeof browser !== 'undefined' ? browser : null);
 const storageNS = chrome && chrome.storage ? chrome.storage : (runtimeNS && runtimeNS.storage ? runtimeNS.storage : null);
 
+// Log storage availability
+console.log('[FixSmoothTranslator] Offscreen page loaded, storage available:', !!storageNS);
+
+// Test storage on load
+if (chrome && chrome.storage && chrome.storage.local) {
+  chrome.storage.local.get(['translationSources'], (result) => {
+    console.log('[FixSmoothTranslator] Initial storage test - translationSources:', result.translationSources);
+  });
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Log ALL messages to offscreen
+  console.log('[FixSmoothTranslator Offscreen] Received message:', message.type, message.__bridged ? '(bridged)' : '(direct)', message);
+  
   switch (message && message.type) {
     case 'translate':
+      // CRITICAL: Only process bridged translate messages that come from service worker
+      // Direct messages will use default sources, so skip them
+      if (!message.__bridged) {
+        console.log('[FixSmoothTranslator Offscreen] SKIPPING direct translate message - must come through service worker');
+        return false; // Don't process direct translate messages
+      }
+      console.log('[FixSmoothTranslator Offscreen] Processing bridged translate for:', message.text);
       try {
         let responseTimeout;
         let responseSent = false;

@@ -196,7 +196,7 @@
     const quickBtns = document.querySelectorAll('.quickBtn');
     quickBtns.forEach(function(btn){ btn.addEventListener('click', handleQuickClick); });
 
-    // Keyboard shortcut button
+  // Keyboard shortcut button
     const customizeShortcutBtn = document.getElementById('customizeShortcutBtn');
     if (customizeShortcutBtn) {
       customizeShortcutBtn.addEventListener('click', openShortcutSettings);
@@ -211,6 +211,129 @@
         getCurrentShortcut();
       }
     });
+
+    // Translation Sources Settings
+    const saveSourcesBtn = document.getElementById('saveSourcesBtn');
+    const resetSourcesBtn = document.getElementById('resetSourcesBtn');
+    const sourcesStatusArea = document.getElementById('sourcesStatusArea');
+
+    function showSourcesMessage(text, type = 'info') {
+      if (!sourcesStatusArea) return;
+      sourcesStatusArea.className = 'alert show alert-' + type;
+      sourcesStatusArea.textContent = text;
+      setTimeout(function(){ 
+        if (sourcesStatusArea) {
+          sourcesStatusArea.className = 'alert';
+          sourcesStatusArea.textContent = '';
+        }
+      }, 3000);
+    }
+
+    function loadTranslationSources() {
+      if (!chrome || !chrome.storage || !chrome.storage.local) {
+        showSourcesMessage('⚠️ Chrome API不可用，使用默认值', 'info');
+        return;
+      }
+      chrome.storage.local.get(['translationSources'], function(result) {
+        if (chrome.runtime && chrome.runtime.lastError) {
+          showSourcesMessage('⚠️ 加载翻译源设置失败，使用默认值', 'info');
+          return;
+        }
+        const sources = result.translationSources || {
+          youdaoDict: true,
+          youdaoTranslate: true,
+          iciba: false
+        };
+        
+        // Update checkboxes
+        const youdaoDictCheck = document.getElementById('source-youdao-dict');
+        const youdaoTranslateCheck = document.getElementById('source-youdao-translate');
+        const icibaCheck = document.getElementById('source-iciba');
+        
+        if (youdaoDictCheck) youdaoDictCheck.checked = sources.youdaoDict !== false;
+        if (youdaoTranslateCheck) youdaoTranslateCheck.checked = sources.youdaoTranslate !== false;
+        if (icibaCheck) icibaCheck.checked = sources.iciba === true;
+      });
+    }
+
+    function saveTranslationSources() {
+      const youdaoDictCheck = document.getElementById('source-youdao-dict');
+      const youdaoTranslateCheck = document.getElementById('source-youdao-translate');
+      const icibaCheck = document.getElementById('source-iciba');
+      
+      const sources = {
+        youdaoDict: youdaoDictCheck ? youdaoDictCheck.checked : true,
+        youdaoTranslate: youdaoTranslateCheck ? youdaoTranslateCheck.checked : true,
+        iciba: icibaCheck ? icibaCheck.checked : false
+      };
+      
+      console.log('[Options] Saving translation sources:', sources);
+      
+      // Ensure at least one source is selected
+      if (!sources.youdaoDict && !sources.youdaoTranslate && !sources.iciba) {
+        showSourcesMessage('❌ 至少需要选择一个翻译源', 'error');
+        return;
+      }
+      
+      if (!chrome || !chrome.storage || !chrome.storage.local) {
+        showSourcesMessage('❌ Chrome存储API不可用，请确保在扩展环境中使用', 'error');
+        return;
+      }
+      
+      chrome.storage.local.set({ translationSources: sources }, function() {
+        if (chrome.runtime && chrome.runtime.lastError) {
+          showSourcesMessage('❌ 保存失败: ' + chrome.runtime.lastError.message, 'error');
+          console.error('[Options] Failed to save sources:', chrome.runtime.lastError);
+        } else {
+          showSourcesMessage('✅ 翻译源设置已保存', 'success');
+          console.log('[Options] Sources saved successfully');
+          // Verify what was saved
+          chrome.storage.local.get(['translationSources'], function(result) {
+            console.log('[Options] Verification - saved sources:', result.translationSources);
+          });
+        }
+      });
+    }
+
+    function resetTranslationSources() {
+      const youdaoDictCheck = document.getElementById('source-youdao-dict');
+      const youdaoTranslateCheck = document.getElementById('source-youdao-translate');
+      const icibaCheck = document.getElementById('source-iciba');
+      
+      if (youdaoDictCheck) youdaoDictCheck.checked = true;
+      if (youdaoTranslateCheck) youdaoTranslateCheck.checked = true;
+      if (icibaCheck) icibaCheck.checked = false;
+      
+      const defaultSources = {
+        youdaoDict: true,
+        youdaoTranslate: true,
+        iciba: false
+      };
+      
+      if (!chrome || !chrome.storage || !chrome.storage.local) {
+        showSourcesMessage('❌ Chrome存储API不可用', 'error');
+        return;
+      }
+      
+      chrome.storage.local.set({ translationSources: defaultSources }, function() {
+        if (chrome.runtime && chrome.runtime.lastError) {
+          showSourcesMessage('❌ 重置失败', 'error');
+        } else {
+          showSourcesMessage('🔄 已恢复默认翻译源设置', 'success');
+        }
+      });
+    }
+
+    if (saveSourcesBtn) {
+      saveSourcesBtn.addEventListener('click', saveTranslationSources);
+    }
+    
+    if (resetSourcesBtn) {
+      resetSourcesBtn.addEventListener('click', resetTranslationSources);
+    }
+    
+    // Load translation sources settings
+    loadTranslationSources();
 
     // Wait a tick for chrome APIs if needed
     if (chrome && chrome.storage) {

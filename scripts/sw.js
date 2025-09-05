@@ -253,25 +253,69 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   // Handle translate with a safe fallback to avoid undefined responses
   if (message && message.type === 'translate') {
+    // CRITICAL: Skip if this is already a bridged message to prevent loops
+    if (message.__bridged) {
+      console.log('[Service Worker] Skipping bridged translate message');
+      return false;
+    }
+    
     ensureOffscreen().then(() => {
-      const forward = (timeoutOverride) => {
-        let responded = false;
-        const bridged = Object.assign({ __bridged: true }, message);
-        if (Number.isFinite(timeoutOverride)) bridged.timeout = timeoutOverride;
-        chrome.runtime.sendMessage(bridged, (resp) => {
+      // Get translation sources from storage and pass them to offscreen
+      chrome.storage.local.get(['translationSources'], (storageResult) => {
+        const sources = storageResult.translationSources || {
+          youdaoDict: true,
+          youdaoTranslate: true,
+          iciba: false
+        };
+        console.log('[Service Worker] Got translation sources from storage:', sources);
+        
+        const forward = (timeoutOverride) => {
+          let responded = false;
+          const bridged = Object.assign({ 
+            __bridged: true, 
+            __originalSender: 'sw',
+            translationSources: sources  // PASS SOURCES DIRECTLY!
+          }, message);
+          if (Number.isFinite(timeoutOverride)) bridged.timeout = timeoutOverride;
+          console.log('[Service Worker] Forwarding translate to offscreen with sources:', bridged.text, sources);
+          chrome.runtime.sendMessage(bridged, (resp) => {
           if (responded) return; // Prevent double response
           responded = true;
           if (chrome.runtime.lastError) {
             console.warn('Translate message failed:', chrome.runtime.lastError.message);
-            try {
-              sendResponse({ 
-                status: 'failure', 
-                translation: '消息传递失败', 
-                text: message.text || '', 
-                timeout: 10 
-              });
-            } catch (e) {
-              console.warn('Failed to send error response:', e);
+            // Retry once if connection failed (offscreen might be restarting)
+            if (chrome.runtime.lastError.message.includes('Receiving end does not exist')) {
+              console.log('[Service Worker] Offscreen not ready, retrying in 500ms...');
+              setTimeout(() => {
+                ensureOffscreen().then(() => {
+                  chrome.runtime.sendMessage(bridged, (retryResp) => {
+                    if (chrome.runtime.lastError) {
+                      console.error('Retry also failed:', chrome.runtime.lastError);
+                      try {
+                        sendResponse({ 
+                          status: 'failure', 
+                          translation: '翻译服务暂时不可用，请稍后重试', 
+                          text: message.text || '', 
+                          timeout: 10 
+                        });
+                      } catch (e) {}
+                    } else {
+                      try { sendResponse(retryResp); } catch (_) {}
+                    }
+                  });
+                });
+              }, 500);
+            } else {
+              try {
+                sendResponse({ 
+                  status: 'failure', 
+                  translation: '消息传递失败', 
+                  text: message.text || '', 
+                  timeout: 10 
+                });
+              } catch (e) {
+                console.warn('Failed to send error response:', e);
+              }
             }
             return;
           }
@@ -292,15 +336,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }, 4000);
         });
       };
-      // If caller didn't include timeout and it's from a tab (not popup), inject current timeout
-      if (!Number.isFinite(Number(message && message.timeout)) && sender && sender.tab && sender.tab.id != null) {
-        chrome.storage.local.get({ notifyTimeout: 10 }, (opts) => {
-          const to = Number(opts && opts.notifyTimeout);
-          forward(Number.isFinite(to) ? to : 10);
-        });
-      } else {
-        forward(Number(message && message.timeout));
-      }
+        // If caller didn't include timeout and it's from a tab (not popup), inject current timeout
+        if (!Number.isFinite(Number(message && message.timeout)) && sender && sender.tab && sender.tab.id != null) {
+          chrome.storage.local.get({ notifyTimeout: 10 }, (opts) => {
+            const to = Number(opts && opts.notifyTimeout);
+            forward(Number.isFinite(to) ? to : 10);
+          });
+        } else {
+          forward(Number(message && message.timeout));
+        }
+      });  // Close storage.get callback
     }).catch((error) => {
       console.error('Failed to ensure offscreen for translate:', error);
       // Send error response immediately if offscreen fails
@@ -334,17 +379,44 @@ chrome.commands?.onCommand.addListener(async (command) => {
   }
 });
 
+// Track if offscreen needs reload due to settings change
+let offscreenNeedsReload = false;
+
+// Listen for storage changes to detect when translation sources change
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.translationSources) {
+    console.log('[Service Worker] Translation sources changed:', changes.translationSources);
+    offscreenNeedsReload = true;
+    // Close the offscreen document so it will be recreated with new settings
+    chrome.offscreen.closeDocument().then(() => {
+      console.log('[Service Worker] Offscreen closed, will recreate on next request');
+      // Recreate immediately to avoid delay on next translate
+      setTimeout(() => ensureOffscreen(), 100);
+    }).catch(() => {
+      // Ignore error if document doesn't exist
+    });
+  }
+});
+
 // Extension lifecycle
 chrome.runtime.onInstalled.addListener(async () => {
   await ensureOffscreen();
   // Only set defaults if they are not already defined, do not overwrite user settings
-  chrome.storage.local.get(['notifyTimeout', 'siteRules'], (items) => {
+  chrome.storage.local.get(['notifyTimeout', 'siteRules', 'translationSources'], (items) => {
     const updates = {};
     if (typeof items.notifyTimeout === 'undefined') {
       updates.notifyTimeout = 10; // default fade time in seconds
     }
     if (!Array.isArray(items.siteRules)) {
       updates.siteRules = [{ site: '*', enabled: true }];
+    }
+    if (typeof items.translationSources === 'undefined') {
+      // Default translation sources - Youdao enabled, iCiba disabled
+      updates.translationSources = {
+        youdaoDict: true,
+        youdaoTranslate: true,
+        iciba: false
+      };
     }
     if (Object.keys(updates).length) {
       chrome.storage.local.set(updates);

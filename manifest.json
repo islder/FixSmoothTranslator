@@ -67,6 +67,12 @@
     "https://dict.youdao.com/*",
     "https://www.iciba.com/*"
   ],
+  "web_accessible_resources": [
+    {
+      "resources": ["test_sources.html"],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   }

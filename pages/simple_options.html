@@ -480,6 +480,77 @@
             </div>
         </div>
         
+        <!-- Translation Source Settings -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="icon">🔄</span>
+                    翻译源设置
+                </h2>
+                <p class="card-description">
+                    选择启用的翻译源（可多选）
+                </p>
+            </div>
+            <div class="card-content">
+                <div class="form-item">
+                    <label class="form-label">可用翻译源</label>
+                    <div style="padding: 16px; background: hsl(var(--muted) / 0.3); border-radius: var(--radius); border: 1px solid hsl(var(--border));">
+                        <!-- Youdao Dictionary -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid hsl(var(--border));">
+                            <div style="flex: 1;">
+                                <label for="source-youdao-dict" style="cursor: pointer; display: flex; align-items: center;">
+                                    <input type="checkbox" id="source-youdao-dict" checked style="margin-right: 12px; width: 18px; height: 18px; cursor: pointer;">
+                                    <div>
+                                        <div style="font-weight: 500; margin-bottom: 4px;">有道词典</div>
+                                        <div style="font-size: 12px; color: hsl(var(--muted-foreground));">适用于单词查询，提供详细释义和音标</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- Youdao Online Translate -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid hsl(var(--border));">
+                            <div style="flex: 1;">
+                                <label for="source-youdao-translate" style="cursor: pointer; display: flex; align-items: center;">
+                                    <input type="checkbox" id="source-youdao-translate" checked style="margin-right: 12px; width: 18px; height: 18px; cursor: pointer;">
+                                    <div>
+                                        <div style="font-weight: 500; margin-bottom: 4px;">有道在线翻译</div>
+                                        <div style="font-size: 12px; color: hsl(var(--muted-foreground));">适用于句子和短语翻译，支持多语言</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- iCiba Dictionary -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0;">
+                            <div style="flex: 1;">
+                                <label for="source-iciba" style="cursor: pointer; display: flex; align-items: center;">
+                                    <input type="checkbox" id="source-iciba" style="margin-right: 12px; width: 18px; height: 18px; cursor: pointer;">
+                                    <div>
+                                        <div style="font-weight: 500; margin-bottom: 4px;">金山词霸</div>
+                                        <div style="font-size: 12px; color: hsl(var(--muted-foreground));">备用词典源，当有道词典无结果时使用</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-item">
+                    <div class="button-group">
+                        <button class="btn btn-primary" id="saveSourcesBtn">
+                            <span class="icon">💾</span>
+                            保存翻译源设置
+                        </button>
+                        <button class="btn btn-outline" id="resetSourcesBtn">
+                            <span class="icon">🔄</span>
+                            恢复默认
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="sourcesStatusArea" class="alert"></div>
+            </div>
+        </div>
+        
         <!-- Keyboard Shortcut Settings -->
         <div class="card">
             <div class="card-header">
