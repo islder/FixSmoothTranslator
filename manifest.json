@@ -65,7 +65,7 @@
     "http://mobile.youdao.com/*",
     "https://mobile.youdao.com/*",
     "https://dict.youdao.com/*",
-    "https://translate.googleapis.com/*"
+    "https://www.iciba.com/*"
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"

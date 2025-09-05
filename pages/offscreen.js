@@ -175,24 +175,114 @@ async function fetchTranslate(text) {
       return { status: 'success', translation: lis.map(li => li.textContent.trim()).join('<br/><br/>') };
     }
   } catch (_) {}
-  // Fallback to Google translate (public endpoint)
-  try {
-    const g = await fetchGoogle(text);
-    if (g && g.translation) return { status: 'success', translation: g.translation };
-  } catch (_) {}
   return { status: 'failure', translation: '未找到释义' };
 }
 
-async function fetchGoogle(text) {
-  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=zh-CN&dt=t&q=${encodeURIComponent(text)}`;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
-  const res = await fetch(url, { credentials: 'omit', signal: controller.signal });
-  clearTimeout(timeoutId);
-  const data = await res.json();
-  // data[0] is array of [translated, original, ...]
-  const segs = Array.isArray(data) && Array.isArray(data[0]) ? data[0].map(s => s[0]).filter(Boolean) : [];
-  return { translation: segs.join('') };
+// iCiba dictionary for word lookup when Youdao fails
+async function fetchICiba(word) {
+  try {
+    const url = `https://www.iciba.com/word?w=${encodeURIComponent(word)}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+    const res = await fetch(url, { credentials: 'omit', signal: controller.signal });
+    clearTimeout(timeoutId);
+    const html = await res.text();
+    const doc = new DOMParser().parseFromString(sanitizeHTML(html), 'text/html');
+    
+    const result = { status: 'failure', text: word };
+    
+    // Extract phonetic from iCiba page - try multiple selector patterns
+    const phoneticSelectors = [
+      '.Mean_symbols__fpCmS .Mean_pronounce__dqn_a span',
+      '.Mean_pronounce__dqn_a span',
+      '.pronounce span',
+      '[class*="pronounce"] span',
+      '[class*="phonetic"]'
+    ];
+    
+    for (const selector of phoneticSelectors) {
+      const phoneticElems = doc.querySelectorAll(selector);
+      if (phoneticElems.length > 0) {
+        const phonetics = [];
+        phoneticElems.forEach(elem => {
+          const text = elem.textContent.trim();
+          if (text && text.includes('[') && text.includes(']')) {
+            // Extract just the phonetic part
+            const match = text.match(/\[[^\]]+\]/g);
+            if (match) {
+              phonetics.push(...match);
+            }
+          }
+        });
+        if (phonetics.length > 0) {
+          result.phonetic = phonetics.join(' ');
+          break;
+        }
+      }
+    }
+    
+    // Extract meanings from iCiba page - try multiple approaches
+    const meanings = [];
+    
+    // Approach 1: Try to get meanings from class-based selectors
+    const meaningSelectors = [
+      '.Mean_part__UI0nU',
+      '[class*="Mean_part"]',
+      '[class*="trans"]',
+      '.trans-container li'
+    ];
+    
+    for (const selector of meaningSelectors) {
+      if (meanings.length > 0) break;
+      
+      const elements = doc.querySelectorAll(selector);
+      elements.forEach(elem => {
+        // Look for part of speech (n., v., adj., etc.)
+        const text = elem.textContent.trim();
+        
+        // Filter out navigation, buttons, and other UI elements
+        if (text && 
+            text.length > 1 && 
+            text.length < 200 &&
+            !text.includes('查看') &&
+            !text.includes('更多') &&
+            !text.includes('翻译') &&
+            !text.includes('例句')) {
+          
+          // Check if it looks like a definition (has Chinese characters or is a part of speech)
+          if (/[一-龥]/.test(text) || /^(n\.|v\.|adj\.|adv\.|prep\.|pron\.)/.test(text)) {
+            meanings.push(text);
+          }
+        }
+      });
+    }
+    
+    // Approach 2: If no meanings found, try to find any list items with Chinese text
+    if (meanings.length === 0) {
+      const allLis = doc.querySelectorAll('li');
+      allLis.forEach(elem => {
+        const text = elem.textContent.trim();
+        if (text && 
+            /[一-龥]/.test(text) && // Has Chinese characters
+            text.length > 2 && 
+            text.length < 100 &&
+            !text.includes('查看') &&
+            !text.includes('更多')) {
+          meanings.push(text);
+        }
+      });
+    }
+    
+    if (meanings.length > 0) {
+      result.translation = meanings.slice(0, 10).join('\n');
+      result.status = 'success';
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('iCiba fetch error:', error);
+    return { status: 'failure', text: word, translation: '未找到释义' };
+  }
 }
 
 async function translateHandler(payload, sendResponse) {
@@ -212,9 +302,11 @@ async function translateHandler(payload, sendResponse) {
     if (isWord(text)) {
       result = await fetchDict(text);
       if (result.status !== 'success') {
-        // fallback to google for single words too
-        const g = await fetchGoogle(text);
-        if (g && g.translation) result = { status: 'success', translation: g.translation, text };
+        // fallback to iCiba for single words when Youdao fails
+        const iciba = await fetchICiba(text);
+        if (iciba && iciba.status === 'success') {
+          result = iciba;
+        }
       }
     } else {
       result = await fetchTranslate(text);
