@@ -26,6 +26,9 @@
 1. 克隆此仓库（或点击Code -> Download ZIP -> 解压到文件夹）：
 ```bash
 git clone https://github.com/islder/FixSmoothTranslator.git
+```
+
+```bash
 cd FixSmoothTranslator
 ```
 
