@@ -22,7 +22,9 @@
   right: 15px !important;
   top: 35px !important;
   max-height: calc(100% - 40px) !important;
-  overflow: auto !important;
+  /* Avoid the temporary horizontal scrollbar (grey pill) when toasts animate */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   overflow-anchor: none !important;
   pointer-events: auto !important;
   display: block !important;
@@ -45,7 +47,7 @@
   z-index: 2147483647 !important;
   line-height: 1.5 !important;
   font-size: 14px !important;
-  will-change: opacity !important;
+  will-change: opacity, transform !important;
   display: block !important;
   position: relative !important;
   overflow: visible !important;
@@ -68,17 +70,20 @@
   min-width: 180px !important;
   margin-bottom: 8px !important;
   border-radius: 14px !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  /* Move shadow rendering to the inner card to ensure rounded corners */
+  box-shadow: none !important;
   opacity: 1 !important;
-  overflow: hidden !important;
+  /* allow inner card shadow to overflow the outer rounded container */
+  overflow: visible !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
 }
 
-/* 现代样式内部元素继承圆角，修复背景方角问题 */
+/* Render shadow on the rounded card so corners match perfectly */
 #cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast .cst-result,
 #cst-list[data-cst-toast-style="modern"] .cst-result-toast .cst-result {
   border-radius: 14px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* --- 经典样式动画 --- */
@@ -105,7 +110,8 @@
 #cst-list[data-cst-toast-style="modern"] .cst-result-toast.fade-enter,
 #cst-list[data-cst-toast-style="modern"] .cst-result-toast.fade-leave-active {
   opacity: 0 !important;
-  transform: translateX(20px) !important;
+  /* horizontal slide while container hides horizontal scrollbar */
+  transform: translateX(12px) !important;
 }
 
 /* --- 经典样式关闭按钮 --- */
