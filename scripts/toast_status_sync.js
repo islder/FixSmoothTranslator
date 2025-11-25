@@ -1,6 +1,35 @@
 // Toast Status Synchronizer - syncs data-cst-status from .cst-result to parent .cst-result-toast
+// 同时负责加载和应用Toast样式设置（classic/modern）
 (function() {
   'use strict';
+  
+  /* ============================================================
+     Toast样式设置功能
+     从chrome.storage加载用户选择的样式（classic或modern）
+     并应用到#cst-list元素的data-cst-toast-style属性
+     ============================================================ */
+  function applyToastStyle(style) {
+    const listElement = document.getElementById('cst-list');
+    if (listElement) {
+      listElement.setAttribute('data-cst-toast-style', style || 'modern');
+    }
+  }
+  
+  function loadAndApplyToastStyle() {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.get(['toastStyle'], function(result) {
+        const style = result.toastStyle || 'modern';
+        applyToastStyle(style);
+      });
+      
+      // 监听设置变化，实时更新样式
+      chrome.storage.onChanged.addListener(function(changes, areaName) {
+        if (areaName === 'local' && changes.toastStyle) {
+          applyToastStyle(changes.toastStyle.newValue || 'modern');
+        }
+      });
+    }
+  }
   
   // Function to sync status from result to toast container
   function syncToastStatus(resultElement) {
@@ -49,8 +78,12 @@
     // Initial sync for existing elements
     document.querySelectorAll('.cst-result[data-cst-status]').forEach(syncToastStatus);
     
-    // Set up observer for the main list container
+  // Set up observer for the main list container
     const listElement = document.getElementById('cst-list');
+    
+    // 应用Toast样式设置
+    loadAndApplyToastStyle();
+    
     if (!listElement) {
       // If list doesn't exist yet, wait for it
       const bodyObserver = new MutationObserver(function(mutations) {

@@ -480,6 +480,42 @@
             </div>
         </div>
         
+        <!-- Toast Style Settings (Toast样式切换功能) -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="icon">🎨</span>
+                    提示框样式
+                </h2>
+                <p class="card-description">
+                    选择翻译结果提示框的外观风格
+                </p>
+            </div>
+            <div class="card-content">
+                <div class="form-item">
+                    <label class="form-label">样式选择</label>
+                    <div class="button-group">
+                        <button class="btn btn-outline toast-style-btn" data-style="classic">
+                            <span class="icon">📦</span>
+                            经典样式
+                        </button>
+                        <button class="btn btn-primary toast-style-btn" data-style="modern">
+                            <span class="icon">✨</span>
+                            现代样式
+                        </button>
+                    </div>
+                    <p class="form-description" style="margin-top: 12px; color: hsl(var(--muted-foreground)); font-size: 12px;">
+                        当前样式：<span id="currentToastStyle">现代样式</span>
+                    </p>
+                    <div style="margin-top: 16px; padding: 12px; background: hsl(var(--muted) / 0.3); border-radius: var(--radius); border: 1px solid hsl(var(--border)); font-size: 13px; color: hsl(var(--muted-foreground));">
+                        <strong>经典样式：</strong>简洁紧凑，半透明背景，淡入淡出动画<br>
+                        <strong>现代样式：</strong>圆角卡片，渐变背景，左侧彩色边框，滑入动画
+                    </div>
+                </div>
+                <div id="toastStyleStatusArea" class="alert"></div>
+            </div>
+        </div>
+        
         <!-- Translation Source Settings -->
         <div class="card">
             <div class="card-header">

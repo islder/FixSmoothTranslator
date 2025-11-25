@@ -34,33 +34,82 @@
   width: 0 !important;
 }
 
+/* ============================================================
+   Toast样式切换功能
+   通过 data-cst-toast-style 属性控制，值为 "classic" 或 "modern"
+   默认使用现代样式(modern)
+   ============================================================ */
+
+/* --- 通用Toast基础样式 --- */
 #cst-list .cst-result-toast {
   z-index: 2147483647 !important;
-  max-width: 250px !important;
-  min-width: 150px !important;
   line-height: 1.5 !important;
   font-size: 14px !important;
-  margin-bottom: 5px !important;
-  border-radius: 5px !important;
-  box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.3) !important;
-  opacity: 0.9 !important;
   will-change: opacity !important;
   display: block !important;
   position: relative !important;
   overflow: visible !important;
 }
 
-#cst-list .cst-result-toast.fade-enter-active,
-#cst-list .cst-result-toast.fade-leave-active {
+/* --- 经典样式 (Classic Style) --- */
+#cst-list[data-cst-toast-style="classic"] .cst-result-toast {
+  max-width: 250px !important;
+  min-width: 150px !important;
+  margin-bottom: 5px !important;
+  border-radius: 5px !important;
+  box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.3) !important;
+  opacity: 0.9 !important;
+}
+
+/* --- 现代样式 (Modern Style) - 默认 --- */
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast,
+#cst-list[data-cst-toast-style="modern"] .cst-result-toast {
+  max-width: 320px !important;
+  min-width: 180px !important;
+  margin-bottom: 8px !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  opacity: 1 !important;
+  overflow: hidden !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* 现代样式内部元素继承圆角，修复背景方角问题 */
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast .cst-result,
+#cst-list[data-cst-toast-style="modern"] .cst-result-toast .cst-result {
+  border-radius: 14px !important;
+}
+
+/* --- 经典样式动画 --- */
+#cst-list[data-cst-toast-style="classic"] .cst-result-toast.fade-enter-active,
+#cst-list[data-cst-toast-style="classic"] .cst-result-toast.fade-leave-active {
   transition: opacity 0.5s !important;
 }
 
-#cst-list .cst-result-toast.fade-enter,
-#cst-list .cst-result-toast.fade-leave-active {
+#cst-list[data-cst-toast-style="classic"] .cst-result-toast.fade-enter,
+#cst-list[data-cst-toast-style="classic"] .cst-result-toast.fade-leave-active {
   opacity: 0 !important;
 }
 
-#cst-list .cst-result-toast a.close {
+/* --- 现代样式动画 --- */
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast.fade-enter-active,
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast.fade-leave-active,
+#cst-list[data-cst-toast-style="modern"] .cst-result-toast.fade-enter-active,
+#cst-list[data-cst-toast-style="modern"] .cst-result-toast.fade-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast.fade-enter,
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast.fade-leave-active,
+#cst-list[data-cst-toast-style="modern"] .cst-result-toast.fade-enter,
+#cst-list[data-cst-toast-style="modern"] .cst-result-toast.fade-leave-active {
+  opacity: 0 !important;
+  transform: translateX(20px) !important;
+}
+
+/* --- 经典样式关闭按钮 --- */
+#cst-list[data-cst-toast-style="classic"] .cst-result-toast a.close {
   float: right !important;
   text-decoration: none !important;
   margin-right: 5px !important;
@@ -69,12 +118,75 @@
   cursor: pointer !important;
 }
 
-#cst-list .cst-result-toast a.close:hover {
+#cst-list[data-cst-toast-style="classic"] .cst-result-toast a.close:hover {
   color: #fff !important;
 }
 
-#cst-list .cst-result, .cst-result {
+/* --- 现代样式关闭按钮 --- */
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast a.close,
+#cst-list[data-cst-toast-style="modern"] .cst-result-toast a.close {
+  float: right !important;
+  text-decoration: none !important;
+  margin: -4px -4px 0 8px !important;
+  font-size: 16px !important;
+  color: rgba(0, 0, 0, 0.4) !important;
+  cursor: pointer !important;
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  transition: all 0.2s !important;
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast a.close:hover,
+#cst-list[data-cst-toast-style="modern"] .cst-result-toast a.close:hover {
+  color: rgba(0, 0, 0, 0.7) !important;
+  background: rgba(0, 0, 0, 0.12) !important;
+  transform: scale(1.1) !important;
+}
+
+/* 现代样式深色主题关闭按钮 */
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast:has(.cst-result[data-cst-theme="dark"]) a.close,
+#cst-list[data-cst-toast-style="modern"] .cst-result-toast:has(.cst-result[data-cst-theme="dark"]) a.close {
+  color: rgba(255, 255, 255, 0.6) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast:has(.cst-result[data-cst-theme="dark"]) a.close:hover,
+#cst-list[data-cst-toast-style="modern"] .cst-result-toast:has(.cst-result[data-cst-theme="dark"]) a.close:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* --- 经典样式内容区域 --- */
+#cst-list[data-cst-toast-style="classic"] .cst-result {
   padding: 3px 5px !important;
+}
+
+#cst-list[data-cst-toast-style="classic"] .cst-result .cst-result-text {
+  margin-bottom: 5px !important;
+  font-weight: 600 !important;
+}
+
+/* --- 现代样式内容区域 --- */
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result,
+#cst-list[data-cst-toast-style="modern"] .cst-result {
+  padding: 14px 16px !important;
+}
+
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result .cst-result-text,
+#cst-list[data-cst-toast-style="modern"] .cst-result .cst-result-text {
+  margin-bottom: 8px !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  letter-spacing: -0.2px !important;
+}
+
+/* --- 通用样式 --- */
+#cst-list .cst-result, .cst-result {
   display: block !important;
   word-wrap: break-word !important;
   overflow-wrap: break-word !important;
@@ -105,8 +217,6 @@
 }
 
 #cst-list .cst-result .cst-result-text, .cst-result .cst-result-text {
-  margin-bottom: 5px !important;
-  font-weight: 600 !important;
   color: inherit !important;
 }
 
@@ -142,26 +252,54 @@
   word-break: break-word !important;
 }
 
-.cst-result[data-cst-theme="dark"][data-cst-status="pending"],
-.cst-result[data-cst-theme="dark"][data-cst-status="success"] {
+/* ============================================================
+   主题颜色样式 - 经典样式使用纯色，现代样式使用渐变
+   ============================================================ */
+
+/* --- 经典样式主题颜色 --- */
+#cst-list[data-cst-toast-style="classic"] .cst-result[data-cst-theme="dark"][data-cst-status="success"] {
   background: #336721 !important;
   color: #edf8ed !important;
 }
 
-.cst-result[data-cst-theme="dark"][data-cst-status="failure"] {
+#cst-list[data-cst-toast-style="classic"] .cst-result[data-cst-theme="dark"][data-cst-status="failure"] {
   background: #fff299 !important;
   color: #888 !important;
 }
 
-.cst-result[data-cst-theme="light"][data-cst-status="pending"],
-.cst-result[data-cst-theme="light"][data-cst-status="success"] {
+#cst-list[data-cst-toast-style="classic"] .cst-result[data-cst-theme="light"][data-cst-status="success"] {
   background: #ddeadd !important;
   color: #2b3f29 !important;
 }
 
-.cst-result[data-cst-theme="light"][data-cst-status="failure"] {
+#cst-list[data-cst-toast-style="classic"] .cst-result[data-cst-theme="light"][data-cst-status="failure"] {
   background: #fff3c8 !important;
   color: #888 !important;
+}
+
+/* --- 现代样式主题颜色（带渐变，移除左边框避免圆角冲突） --- */
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result[data-cst-theme="dark"][data-cst-status="success"],
+#cst-list[data-cst-toast-style="modern"] .cst-result[data-cst-theme="dark"][data-cst-status="success"] {
+  background: linear-gradient(135deg, rgba(45, 85, 55, 0.95) 0%, rgba(35, 75, 45, 0.95) 100%) !important;
+  color: #e8f5e9 !important;
+}
+
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result[data-cst-theme="dark"][data-cst-status="failure"],
+#cst-list[data-cst-toast-style="modern"] .cst-result[data-cst-theme="dark"][data-cst-status="failure"] {
+  background: linear-gradient(135deg, rgba(80, 70, 40, 0.95) 0%, rgba(70, 60, 30, 0.95) 100%) !important;
+  color: #fff8e1 !important;
+}
+
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result[data-cst-theme="light"][data-cst-status="success"],
+#cst-list[data-cst-toast-style="modern"] .cst-result[data-cst-theme="light"][data-cst-status="success"] {
+  background: linear-gradient(135deg, rgba(232, 245, 233, 0.98) 0%, rgba(220, 237, 222, 0.98) 100%) !important;
+  color: #1b5e20 !important;
+}
+
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result[data-cst-theme="light"][data-cst-status="failure"],
+#cst-list[data-cst-toast-style="modern"] .cst-result[data-cst-theme="light"][data-cst-status="failure"] {
+  background: linear-gradient(135deg, rgba(255, 248, 225, 0.98) 0%, rgba(255, 243, 200, 0.98) 100%) !important;
+  color: #f57f17 !important;
 }
 
 /* Enhanced text color specificity for all child elements */
@@ -217,7 +355,11 @@ html body #cst-list .cst-result-toast .cst-result-phonetic {
   isolation: isolate !important;
   contain: style !important;
 }
-/* Hide the entire toast container during pending state to prevent transparent frames */
+
+/* ============================================================
+   Pending状态隐藏 - 修复加载前显示空框/小条的bug
+   确保在翻译结果加载完成前，完全隐藏所有可见元素
+   ============================================================ */
 #cst-list .cst-result-toast[data-cst-toast-status="pending"],
 #cst-list .cst-result-toast:has(.cst-result[data-cst-status="pending"]) {
   display: none !important;
@@ -225,24 +367,45 @@ html body #cst-list .cst-result-toast .cst-result-phonetic {
   opacity: 0 !important;
   pointer-events: none !important;
   height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
   overflow: hidden !important;
+  background: transparent !important;
 }
 
-/* Always hide pending results */
+/* 隐藏pending状态的结果内容 */
 .cst-result[data-cst-status="pending"] {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
 }
 
-/* Ensure result content is visible when ready */
+/* 确保加载完成后正常显示 */
 .cst-result[data-cst-status="success"],
 .cst-result[data-cst-status="failure"] {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+}
+
+/* 隐藏toast内的所有hr和分隔线元素 */
+#cst-list .cst-result-toast hr,
+#cst-list .cst-result hr {
+  display: none !important;
+  height: 0 !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Link inspection mode styles */

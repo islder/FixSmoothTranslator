@@ -335,6 +335,79 @@
     // Load translation sources settings
     loadTranslationSources();
 
+    /* ============================================================
+       Toast样式切换功能
+       允许用户在经典样式(classic)和现代样式(modern)之间切换
+       设置保存在chrome.storage.local的toastStyle字段
+       ============================================================ */
+    const toastStyleBtns = document.querySelectorAll('.toast-style-btn');
+    const currentToastStyleSpan = document.getElementById('currentToastStyle');
+    const toastStyleStatusArea = document.getElementById('toastStyleStatusArea');
+    
+    function showToastStyleMessage(text, type) {
+      if (!toastStyleStatusArea) return;
+      toastStyleStatusArea.className = 'alert show alert-' + type;
+      toastStyleStatusArea.textContent = text;
+      setTimeout(function() {
+        if (toastStyleStatusArea) {
+          toastStyleStatusArea.className = 'alert';
+          toastStyleStatusArea.textContent = '';
+        }
+      }, 3000);
+    }
+    
+    function updateToastStyleUI(style) {
+      // 更新按钮样式
+      toastStyleBtns.forEach(function(btn) {
+        if (btn.getAttribute('data-style') === style) {
+          btn.classList.remove('btn-outline');
+          btn.classList.add('btn-primary');
+        } else {
+          btn.classList.remove('btn-primary');
+          btn.classList.add('btn-outline');
+        }
+      });
+      // 更新显示文字
+      if (currentToastStyleSpan) {
+        currentToastStyleSpan.textContent = style === 'classic' ? '经典样式' : '现代样式';
+      }
+    }
+    
+    function loadToastStyle() {
+      if (!chrome || !chrome.storage || !chrome.storage.local) return;
+      chrome.storage.local.get(['toastStyle'], function(result) {
+        const style = result.toastStyle || 'modern';
+        updateToastStyleUI(style);
+      });
+    }
+    
+    function saveToastStyle(style) {
+      if (!chrome || !chrome.storage || !chrome.storage.local) {
+        showToastStyleMessage('❌ Chrome存储API不可用', 'error');
+        return;
+      }
+      chrome.storage.local.set({ toastStyle: style }, function() {
+        if (chrome.runtime && chrome.runtime.lastError) {
+          showToastStyleMessage('❌ 保存失败: ' + chrome.runtime.lastError.message, 'error');
+        } else {
+          updateToastStyleUI(style);
+          const styleName = style === 'classic' ? '经典样式' : '现代样式';
+          showToastStyleMessage('✅ 已切换到' + styleName, 'success');
+        }
+      });
+    }
+    
+    // 绑定按钮点击事件
+    toastStyleBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const style = btn.getAttribute('data-style');
+        saveToastStyle(style);
+      });
+    });
+    
+    // 加载当前Toast样式设置
+    loadToastStyle();
+
     // Wait a tick for chrome APIs if needed
     if (chrome && chrome.storage) {
       loadSettings();
