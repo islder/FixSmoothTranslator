@@ -19,11 +19,12 @@ function isWord(text) {
     .replace(/^[\'\"""''\(\)\[\]\{\}«»《》【】]+/, '')
     .replace(/[\'\"""''\(\)\[\]\{\}«»《》【】.,!?;:，。！？；：、·…—]+$/, '');
   
-  // Support 1-2 words: single word or two words separated by space/hyphen
+  // Support 1-3 words: single word, two words, or three words separated by space/hyphen
   const oneWordPattern = /^[A-Za-z]+(?:[-'][A-Za-z]+)*$/;
   const twoWordPattern = /^[A-Za-z]+(?:[-'][A-Za-z]+)*\s+[A-Za-z]+(?:[-'][A-Za-z]+)*$/;
+  const threeWordPattern = /^[A-Za-z]+(?:[-'][A-Za-z]+)*\s+[A-Za-z]+(?:[-'][A-Za-z]+)*\s+[A-Za-z]+(?:[-'][A-Za-z]+)*$/;
   
-  return oneWordPattern.test(t) || twoWordPattern.test(t);
+  return oneWordPattern.test(t) || twoWordPattern.test(t) || threeWordPattern.test(t);
 }
 
 function sanitizeHTML(html) {
