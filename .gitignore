@@ -41,3 +41,8 @@ npm-debug.log*
 # Personal data
 personal_data/
 user_data/
+
+# AI Agents MD
+AGENTS.md
+WARP.md
+CLAUDE.md
