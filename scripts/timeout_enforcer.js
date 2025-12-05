@@ -69,15 +69,22 @@
   
   function fadeOutAndRemove(el){
     try {
-      // Use the original fade animation classes
-      el.classList.add('fade-leave-active');
-      
-      // Wait for the animation to complete before removing
-      setTimeout(function(){ 
-        try { 
-          el.remove(); 
-        } catch(_){} 
-      }, 500);
+      // Use requestAnimationFrame for reliable animation timing with multiple toasts
+      requestAnimationFrame(function() {
+        try {
+          // Add fade-leave-to to trigger the transition
+          el.classList.add('fade-leave-to');
+          
+          // Wait for the animation to complete before removing
+          setTimeout(function(){ 
+            try { 
+              el.remove(); 
+            } catch(_){} 
+          }, 500);
+        } catch(_) {
+          try { el.remove(); } catch(_){}
+        }
+      });
     } catch(_) {
       try { el.remove(); } catch(_){}
     }

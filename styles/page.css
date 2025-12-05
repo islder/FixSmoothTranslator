@@ -113,30 +113,39 @@
 }
 
 /* --- 经典样式动画 --- */
-#cst-list[data-cst-toast-style="classic"] .cst-result-toast.fade-enter-active,
-#cst-list[data-cst-toast-style="classic"] .cst-result-toast.fade-leave-active {
+/* 过渡效果 - 应用于所有经典样式toast */
+#cst-list[data-cst-toast-style="classic"] .cst-result-toast {
   transition: opacity 0.5s !important;
 }
 
-#cst-list[data-cst-toast-style="classic"] .cst-result-toast.fade-enter,
-#cst-list[data-cst-toast-style="classic"] .cst-result-toast.fade-leave-active {
+/* 进入动画初始状态 */
+#cst-list[data-cst-toast-style="classic"] .cst-result-toast.fade-enter {
+  opacity: 0 !important;
+}
+
+/* 离开动画结束状态 */
+#cst-list[data-cst-toast-style="classic"] .cst-result-toast.fade-leave-to {
   opacity: 0 !important;
 }
 
 /* --- 现代样式动画 --- */
-#cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast.fade-enter-active,
-#cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast.fade-leave-active,
-#cst-list[data-cst-toast-style="modern"] .cst-result-toast.fade-enter-active,
-#cst-list[data-cst-toast-style="modern"] .cst-result-toast.fade-leave-active {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+/* 过渡效果 - 应用于所有现代样式toast */
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast,
+#cst-list[data-cst-toast-style="modern"] .cst-result-toast {
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
+/* 进入动画初始状态 */
 #cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast.fade-enter,
-#cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast.fade-leave-active,
-#cst-list[data-cst-toast-style="modern"] .cst-result-toast.fade-enter,
-#cst-list[data-cst-toast-style="modern"] .cst-result-toast.fade-leave-active {
+#cst-list[data-cst-toast-style="modern"] .cst-result-toast.fade-enter {
   opacity: 0 !important;
-  /* horizontal slide while container hides horizontal scrollbar */
+  transform: translateX(12px) !important;
+}
+
+/* 离开动画结束状态 */
+#cst-list:not([data-cst-toast-style="classic"]) .cst-result-toast.fade-leave-to,
+#cst-list[data-cst-toast-style="modern"] .cst-result-toast.fade-leave-to {
+  opacity: 0 !important;
   transform: translateX(12px) !important;
 }
 
