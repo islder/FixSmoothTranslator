@@ -408,6 +408,88 @@
     // 加载当前Toast样式设置
     loadToastStyle();
 
+    /* ============================================================
+       Toast位置切换功能
+       允许用户在左(left)、中(center)、右(right)之间切换
+       设置保存在chrome.storage.local的toastPosition字段
+       ============================================================ */
+    const toastPositionBtns = document.querySelectorAll('.toast-position-btn');
+    const currentToastPositionSpan = document.getElementById('currentToastPosition');
+    const toastPositionStatusArea = document.getElementById('toastPositionStatusArea');
+    
+    function showToastPositionMessage(text, type) {
+      if (!toastPositionStatusArea) return;
+      toastPositionStatusArea.className = 'alert show alert-' + type;
+      toastPositionStatusArea.textContent = text;
+      setTimeout(function() {
+        if (toastPositionStatusArea) {
+          toastPositionStatusArea.className = 'alert';
+          toastPositionStatusArea.textContent = '';
+        }
+      }, 3000);
+    }
+    
+    function getPositionName(position) {
+      switch (position) {
+        case 'left': return '左';
+        case 'center': return '中';
+        case 'right': return '右';
+        default: return '右';
+      }
+    }
+    
+    function updateToastPositionUI(position) {
+      // 更新按钮样式
+      toastPositionBtns.forEach(function(btn) {
+        if (btn.getAttribute('data-position') === position) {
+          btn.classList.remove('btn-outline');
+          btn.classList.add('btn-primary');
+        } else {
+          btn.classList.remove('btn-primary');
+          btn.classList.add('btn-outline');
+        }
+      });
+      // 更新显示文字
+      if (currentToastPositionSpan) {
+        currentToastPositionSpan.textContent = getPositionName(position);
+      }
+    }
+    
+    function loadToastPosition() {
+      if (!chrome || !chrome.storage || !chrome.storage.local) return;
+      chrome.storage.local.get(['toastPosition'], function(result) {
+        const position = result.toastPosition || 'right';
+        updateToastPositionUI(position);
+      });
+    }
+    
+    function saveToastPosition(position) {
+      if (!chrome || !chrome.storage || !chrome.storage.local) {
+        showToastPositionMessage('❌ Chrome存储API不可用', 'error');
+        return;
+      }
+      chrome.storage.local.set({ toastPosition: position }, function() {
+        if (chrome.runtime && chrome.runtime.lastError) {
+          showToastPositionMessage('❌ 保存失败: ' + chrome.runtime.lastError.message, 'error');
+        } else {
+          updateToastPositionUI(position);
+          const positionName = getPositionName(position);
+          showToastPositionMessage('✅ 已切换到' + positionName + '侧显示', 'success');
+        }
+      });
+    }
+    
+    // 绑定按钮点击事件
+    toastPositionBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const position = btn.getAttribute('data-position');
+        saveToastPosition(position);
+      });
+    });
+    
+    // 加载当前Toast位置设置
+    loadToastPosition();
+
     // Wait a tick for chrome APIs if needed
     if (chrome && chrome.storage) {
       loadSettings();

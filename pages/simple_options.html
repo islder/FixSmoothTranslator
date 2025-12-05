@@ -513,6 +513,33 @@
                     </div>
                 </div>
                 <div id="toastStyleStatusArea" class="alert"></div>
+                
+                <div class="form-item" style="margin-top: 20px;">
+                    <label class="form-label">位置选择</label>
+                    <div class="button-group">
+                        <button class="btn btn-outline toast-position-btn" data-position="left">
+                            <span class="icon">⬅️</span>
+                            左
+                        </button>
+                        <button class="btn btn-outline toast-position-btn" data-position="center">
+                            <span class="icon">⬆️</span>
+                            中
+                        </button>
+                        <button class="btn btn-primary toast-position-btn" data-position="right">
+                            <span class="icon">➡️</span>
+                            右
+                        </button>
+                    </div>
+                    <p class="form-description" style="margin-top: 12px; color: hsl(var(--muted-foreground)); font-size: 12px;">
+                        当前位置：<span id="currentToastPosition">右</span>
+                    </p>
+                    <div style="margin-top: 16px; padding: 12px; background: hsl(var(--muted) / 0.3); border-radius: var(--radius); border: 1px solid hsl(var(--border)); font-size: 13px; color: hsl(var(--muted-foreground));">
+                        <strong>左：</strong>提示框显示在页面左上角<br>
+                        <strong>中：</strong>提示框显示在页面顶部居中<br>
+                        <strong>右：</strong>提示框显示在页面右上角（默认）
+                    </div>
+                </div>
+                <div id="toastPositionStatusArea" class="alert"></div>
             </div>
         </div>
         

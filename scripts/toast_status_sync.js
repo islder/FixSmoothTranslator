@@ -31,6 +31,34 @@
     }
   }
   
+  /* ============================================================
+     Toast位置设置功能
+     从chrome.storage加载用户选择的位置（left、center或right）
+     并应用到#cst-list元素的data-cst-toast-position属性
+     ============================================================ */
+  function applyToastPosition(position) {
+    const listElement = document.getElementById('cst-list');
+    if (listElement) {
+      listElement.setAttribute('data-cst-toast-position', position || 'right');
+    }
+  }
+  
+  function loadAndApplyToastPosition() {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.get(['toastPosition'], function(result) {
+        const position = result.toastPosition || 'right';
+        applyToastPosition(position);
+      });
+      
+      // 监听设置变化，实时更新位置
+      chrome.storage.onChanged.addListener(function(changes, areaName) {
+        if (areaName === 'local' && changes.toastPosition) {
+          applyToastPosition(changes.toastPosition.newValue || 'right');
+        }
+      });
+    }
+  }
+  
   // Function to sync status from result to toast container
   function syncToastStatus(resultElement) {
     if (!resultElement || !resultElement.parentElement) return;
@@ -83,6 +111,9 @@
     
     // 应用Toast样式设置
     loadAndApplyToastStyle();
+    
+    // 应用Toast位置设置
+    loadAndApplyToastPosition();
     
     if (!listElement) {
       // If list doesn't exist yet, wait for it

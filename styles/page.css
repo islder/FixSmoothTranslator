@@ -31,6 +31,32 @@
   visibility: visible !important;
 }
 
+/* ============================================================
+   Toast位置切换功能
+   通过 data-cst-toast-position 属性控制，值为 "left"、"center" 或 "right"
+   默认使用右侧位置(right)
+   ============================================================ */
+
+/* --- 左侧位置 (Left Position) --- */
+#cst-list[data-cst-toast-position="left"] {
+  left: 15px !important;
+  right: auto !important;
+}
+
+/* --- 居中位置 (Center Position) --- */
+#cst-list[data-cst-toast-position="center"] {
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+}
+
+/* --- 右侧位置 (Right Position) - 默认 --- */
+#cst-list:not([data-cst-toast-position]),
+#cst-list[data-cst-toast-position="right"] {
+  right: 15px !important;
+  left: auto !important;
+}
+
 #cst-list::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
