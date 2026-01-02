@@ -69,6 +69,18 @@
   
   function fadeOutAndRemove(el){
     try {
+      // Avoid double-triggered hides that cause flicker
+      if (el.dataset.cstHiding === '1') return;
+      el.dataset.cstHiding = '1';
+
+      // Lock current height to prevent layout jump during fade-out
+      try {
+        const h = el.offsetHeight;
+        if (h && Number.isFinite(h)) {
+          el.style.maxHeight = h + 'px';
+          el.style.minHeight = h + 'px';
+        }
+      } catch(_) {}
       // Use requestAnimationFrame for reliable animation timing with multiple toasts
       requestAnimationFrame(function() {
         try {
@@ -80,7 +92,7 @@
             try { 
               el.remove(); 
             } catch(_){} 
-          }, 500);
+          }, 420); // match 0.4s CSS transition
         } catch(_) {
           try { el.remove(); } catch(_){}
         }
