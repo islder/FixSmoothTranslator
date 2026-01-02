@@ -7,29 +7,56 @@ const OFFSCREEN_DOCUMENT = 'DOM_PARSER';
 
 // No-op helper removed; offscreen is responsible for initial show to avoid races
 
+// Serialize offscreen creation to avoid concurrent createDocument errors
+let offscreenCreationPromise = null;
+
 async function ensureOffscreen() {
   // Check if offscreen API is available
   if (!chrome.offscreen) {
     console.warn('Offscreen API not available');
     return;
   }
-  
-  try {
-    // Check if hasDocument method exists and if document already exists
+
+  // Reuse in-flight creation to prevent duplicate calls
+  if (offscreenCreationPromise) return offscreenCreationPromise;
+
+  offscreenCreationPromise = (async () => {
     const hasDocument = chrome.offscreen.hasDocument;
-    if (hasDocument) {
-      const existing = await hasDocument();
-      if (existing) return;
+    try {
+      // Check if document already exists
+      if (hasDocument) {
+        const existing = await hasDocument();
+        if (existing) return;
+      }
+
+      await chrome.offscreen.createDocument({
+        url: OFFSCREEN_URL,
+        reasons: [OFFSCREEN_DOCUMENT],
+        justification: OFFSCREEN_REASON,
+      });
+    } catch (error) {
+      const message = error && error.message ? error.message : String(error);
+      if (message.includes('Only a single offscreen document may be created')) {
+        // Treat as benign: re-check existence and continue
+        if (hasDocument) {
+          try {
+            const existing = await hasDocument();
+            if (existing) return;
+          } catch (_) {
+            // fall through to log below
+          }
+        }
+        console.warn('Offscreen document already exists; skip creating another');
+        return;
+      }
+      console.error('Failed to create offscreen document:', error);
+      throw error;
+    } finally {
+      offscreenCreationPromise = null;
     }
-    
-    await chrome.offscreen.createDocument({
-      url: OFFSCREEN_URL,
-      reasons: [OFFSCREEN_DOCUMENT],
-      justification: OFFSCREEN_REASON,
-    });
-  } catch (error) {
-    console.error('Failed to create offscreen document:', error);
-  }
+  })();
+
+  return offscreenCreationPromise;
 }
 
 // Word recording function
@@ -391,6 +418,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
     // Close the offscreen document so it will be recreated with new settings
     chrome.offscreen.closeDocument().then(() => {
       console.log('[Service Worker] Offscreen closed, will recreate on next request');
+      offscreenCreationPromise = null; // allow clean recreation
       // Recreate immediately to avoid delay on next translate
       setTimeout(() => ensureOffscreen(), 100);
     }).catch(() => {
